@@ -37,7 +37,7 @@ Let's load some data. Note, this is a different file format than you're (probabl
 You may also notice the path is structured slightly differently that before. When in standard R script (for example, myscript.R), the "." notation refers to the location of the RStudio project file. HOWEVER, when using Rmd files, the starting location is where the .Rmd file is. Therefore, we need to edit our path a bit. ".." means "go up a level" (in this case, FROM the src directory and TO the root of the project) THEN find the `data` directory, then the `ohio` directory, then find the file.
 
 ```{r readstreams, echo=FALSE}
-oh_streams <- read_sf("../data/ohio/ohio_rivers.gpkg")
+oh_streams <- read_sf("../week5_inclass/ohio/ohio_rivers.gpkg")
 ```
 
 
@@ -56,7 +56,7 @@ tm_shape(oh_streams) + tm_lines()
 ## Let's grab some more data
 
 ```{r}
-oh_counties <- read_sf("../data/ohio/oh_counties.gpkg")
+oh_counties <- read_sf("../week5_inclass/ohio/oh_counties.gpkg")
 oh_counties %>% glimpse()
 ```
 
@@ -119,7 +119,10 @@ Next, let's find only those 303d streams that are in our study area? What's the 
 
 ```{r eval=FALSE, message=TRUE, warning=TRUE, include=FALSE}
 study.streams <- sf::st_intersection(streams.303d, study.area)
+
+oh_streams %>% sf::st_crs()
 ```
+
 
 Oops, that didn't work. What was the problem?
 
@@ -230,8 +233,8 @@ Let's add some parks. There are two parks files in the `/data/ohio/` directory. 
 
 
 ```{r}
-oh_parks_shp <- read_sf("../data/ohio/ohio_parks.shp")
-oh_parks <- read_sf("../data/ohio/oh_parks.gpkg")
+oh_parks_shp <- read_sf("../week5_inclass/ohio/ohio_parks.shp")
+oh_parks <- read_sf("../week5_inclass/ohio/oh_parks.gpkg")
 ```
 
 They're VERY similar, but there are some cases where they might not be the same. Think about when/where, and let's have a class discussion if you're not sure
