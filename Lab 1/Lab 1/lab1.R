@@ -91,7 +91,31 @@ print(result$B)
 my_vec<-c("a","b","c") #vector test 4 with error message ----
 result<-analyze_and_sort(my_vec)
 
-glimpse(d.stations) #This is wrong need to fix, number of monitoring systems in each state ----
-d.stations%>%count(USGS_ID)
-num.stat<-d.stations%>%count(USGS_STATI)
-d.stations%>%count(USGS_STATI)
+glimpse(d.stations) #getting the state names
+d.stations%>%count(STATION_NA)
+my_list<-d.stations%>%count(STATION_NA)
+
+extract_last_two <- function(x) {
+  substr(x, nchar(x) - 1, nchar(x))
+}
+last_two_chars <- sapply(my_list, extract_last_two)
+print(last_two_chars)
+
+my_list<-d.counties%>%mutate(last_two_chars)
+
+df <- my_list %>% 
+  mutate(n = last_two_chars)%>%
+  group_by(STATION_NA)%>%
+  view()
+
+df <- as.data.frame(last_two_chars) #number of stations in each state ----
+
+state_sums <- df %>%
+  mutate(n = as.numeric(n)) %>%
+  group_by(STATION_NA) %>%
+  summarize(total_n = sum(n))
+
+print(state_sums)
+
+
+
