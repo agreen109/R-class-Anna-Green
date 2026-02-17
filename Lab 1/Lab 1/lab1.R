@@ -108,14 +108,27 @@ df <- my_list %>%
   group_by(STATION_NA)%>%
   view()
 
-df <- as.data.frame(last_two_chars) #number of stations in each state ----
-
+df <- as.data.frame(last_two_chars) #4.1 number of stations in each state ----
 state_sums <- df %>%
   mutate(n = as.numeric(n)) %>%
   group_by(STATION_NA) %>%
   summarize(total_n = sum(n))
-
 print(state_sums)
 
+new.counties<-d.counties%>%dplyr::filter(STATEFP10==36) #4.2 average size of counties in NY ----
+new.stations<-sf::st_intersection(d.stations,new.counties)
+glimpse(new.counties)
+plot(new.stations)
+new.counties.area <- c(3374888613, 1936375016, 4283435512, 6645169520)
+average_value <- mean(new.counties.area)
+print(average_value)
+
+Drainage_A<-d.stations%>%slice_max(Drainage_A) #4.3 state with monitoring stations with greatest drainage area ----
+glimpse(Drainage_A)
+
+#Questions ----
+#1. 
+#2.In this lab, I found all of the topics challenging, as this is my first time ever coding in R or RStudio. All of the information was new to me but was a great learning experience getting started with R. 
+#3.Some activity types I would like to see in the future are doing more data points on Ohio. I found learning different data points on other states was really interesting, so it would be cool to work with more data points from Ohio. 
 
 
