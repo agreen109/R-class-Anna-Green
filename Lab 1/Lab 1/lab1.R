@@ -127,7 +127,7 @@ Drainage_A<-d.stations%>%slice_max(Drainage_A) #4.3 state with monitoring statio
 glimpse(Drainage_A)
 
 #Questions ----
-#1. 
+#1. The two statements are not equivalent. The first statement (sf:st_intersections(d.stations,del.counties)) will use d.stations as the primary attribute data, and the second statement (sf:st_intersections(del.counties,d.stations)) will use del.counties as the primary attribute data. The spatial data stucture however, would be the same for both statements. If the data sets were different, my answer would be different. If the two functions had completely differnt attributes, both the attributes and the spatial data structures would be different. 
 #2.In this lab, I found all of the topics challenging, as this is my first time ever coding in R or RStudio. All of the information was new to me but was a great learning experience getting started with R. 
 #3.Some activity types I would like to see in the future are doing more data points on Ohio. I found learning different data points on other states was really interesting, so it would be cool to work with more data points from Ohio. 
 
