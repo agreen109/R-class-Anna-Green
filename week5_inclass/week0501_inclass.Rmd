@@ -286,7 +286,7 @@ That's more intepretable. We have a 3 x 345 table. How might you infer what each
 
 I have given you all of the tools to complete the following items:
 
-### Task(s) 2
+### Task(s) 1
 - find ALL of the Ohio parks within 1km of a 303d stream
 - Make a map (using `tmap`) of just those parks (not all parks), overlaid on a Ohio county map
 - Add a color to the parks based on the type of park (like we did)
@@ -300,3 +300,18 @@ I have given you all of the tools to complete the following items:
 ### Bonus work
 - How many counties do NOT have a 303d stream in them?
 - What county intersects the most parks? The most streams? The most 303d streams?
+
+tmap::ttm()
+
+StreamB <- sf::st_buffer(streams.303d, dist = 1000)
+StreamB <- sf::st_intersection(oh_parks, StreamB)
+tm_shape(oh_counties) + tm_polygons()+
+tm_shape(oh_streams)+tm_polygons(fill="green")+
+tm_shape(StreamB) + tm_polygons(fill="red")
+  
+StreamB <- sf::st_buffer(streams.303d, dist = 1000)
+StreamB <- sf::st_intersection(oh_parks, StreamB)
+tm_shape(oh_counties) + tm_polygons()+
+tm_shape(oh_streams)+tm_polygons(fill="green")+
+tm_shape(StreamB) + tm_polygons(fill="FEATTYPE")
+  
