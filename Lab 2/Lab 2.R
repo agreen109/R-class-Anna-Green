@@ -59,8 +59,25 @@ ggplot(dam_dataset, aes(x = YEAR, y = STATE)) +
   geom_point(color = "darkblue") +
   labs(title = "Scatter plot of dam dataset") 
 
+glimpse(dams)
+number_of_dams <- dams %>% #1.5 one last aspatial visualization ----
+  group_by(STATE) %>%
+  summarize(Dam_Count = n())
 
-#1.5 (NEED TO DO) one last aspatial visualization ----
+bmps %>%
+  group_by(StateAbbreviation) %>%
+  summarize(Total_Cost = sum(Cost, na.rm = TRUE)) %>%
+  inner_join(dams_per_state, by = c("StateAbbreviation" = "STATE")) %>%
+  ggplot(aes(x = Dam_Count, y = Total_Cost, label = StateAbbreviation)) +
+  geom_line(color = "pink", size=2) +
+  scale_y_continuous(labels = scales::dollar) +
+  theme_light() +
+  labs(
+    title = "Dam Counts vs Total BMP Cost",
+    x = "Number of Dams",
+    y = "Total BMP Cost"
+  )
+
 
 glimpse(streams) #2.1 five longest streams (not sure if this is correct output) ----
 streams_length <- streams %>%
