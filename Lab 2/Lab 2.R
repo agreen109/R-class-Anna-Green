@@ -92,34 +92,34 @@ print(top_5_streams)
 glimpse(streams)
 glimpse(counties)
 county_streams <- st_join(streams, counties) %>% #2.2 three counties with greatest total length (in m) ----
-  group_by(STATEFP10) %>%
+  group_by(NAME10) %>%
   summarise(total_length = sum(st_length(.), na.rm = TRUE)) %>%
   arrange(desc(total_length)) %>%
   slice(1:3)
 print(county_streams)
 
 
-glimpse(bmps) #2.3 (NEED TO FIX) ----
+glimpse(bmps) #2.3 ----
 glimpse(counties)
-county_costs <- bmps %>%
-  group_by(Geography) %>% 
-  summarize(Total_Cost = sum(Cost, na.rm = TRUE))
+install.packages("tmap")
+library(tmap)
+bmps$Geography
+counties$NAME10
 
-county_map_data <- counties %>%
-  left_join(county_costs, by = c("NAME10" = "Cost"))
+geography <-bmps %>% 
+  separate(col=Geography, into=c("countynames","other data"), sep = ",")
+glimpse(geography)
+geography$countynames
 
-ggplot(data = county_map_data) +
-  geom_sf(aes(fill = Total_Cost), color = "blue", size=0.4) +
-  scale_fill_viridis_c(labels = scales::dollar, option = "magma", na.value = "pink") +
-  theme_minimal()+
-  labs(
-    title = "Total BMP Cost by County",
-    fill = "Total_Cost"
-  )
+names <- geography %>%
+  group_by(countynames) %>%
+  summarise(costpercounty=sum(Cost, na.rm=T))
 
-tm_shape(county_map_data)+tm_polygons(fill="Cost")
+Joined_data <- left_join(counties,names, by=c("NAME10"="countynames"))
 
+Joined_data %>% tm_shape() + tm_polygons(fill="costpercounty")
 
+glimpse(Joined_data)
 
 glimpse(streams) #2.4 for each dam, closest stream segment ----
 glimpse(dams)
@@ -129,7 +129,6 @@ dams_spatial <- dams %>%
   mutate(Closest_Stream_ID = streams$OBJECTID_1[closest_stream])
 
 print(dams_spatial)
-
 
 
 dams_per_state_summary <- dams_spatial %>% #2.5 how many removed dams in each state ----
