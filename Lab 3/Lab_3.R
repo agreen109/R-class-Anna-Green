@@ -112,6 +112,37 @@ moran.plot(fiveSS$pop_density, #5.4 make a moran plot ----
            ylab = "Spatially lag population density")
 
 
+coordinates <- st_coordinates(st_centroid(st_geometry(fiveSS)))
+
+nearestn2 <- knn2nb(knearneigh(coordinates, k = 1))
+dist <- max(unlist(nbdists(nearestn2, coordinates)))
+dist2 <- dnearneigh(coordinates, d1 = 0, d2 = dist * 1.5)
+glimpse(dist2)
+dists3 <- nbdists(dist2, coordinates)
+idw_weights <- lapply(dists3, function(x) 1 / x)
+glimpse(idw_weights)
+
+
+WS_idw <- nb2listw(dist2, glist = idw_weights, style = "W", zero.policy = TRUE) #6.1 standardizing the  W using idw ---- 
+
+
+number_neighbors_idw <- card(dist2) #6.2 making histogram of number of neighboors using IDW ----
+hist(num_neighbors_idw,
+     main = "Histogram of number of neighbors based on distance",
+     xlab = "Number of neighbors",
+     col = "limegreen")
+
+
+average_neighbors_idw <- mean(number_neighbors_idw) #6.3 average number of neighbors using IDW ----
+cat("Average number of neighbors using IDW:", round(average_neighbors_idw, 2), "\n")
+
+
+moran.plot(fiveSS$pop_density, #6.4 make a moran plot using IDW ----
+           listw = WS_idw,
+           main = "Moran plot using IDW",
+           xlab = "Population pensity",
+           ylab = "Spatially lag population density")
+
 
 
 
