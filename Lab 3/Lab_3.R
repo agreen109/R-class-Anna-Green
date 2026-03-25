@@ -109,7 +109,7 @@ moran.plot(fiveSS$pop_density, #5.4 make a moran plot ----
            listw = queenlistw,
            main = "Moran plot using queen",
            xlab = "Population density",
-           ylab = "Spatially lag population density")
+           ylab = "Spatial lag population density")
 
 
 coordinates <- st_coordinates(st_centroid(st_geometry(fiveSS)))
@@ -141,7 +141,7 @@ moran.plot(fiveSS$pop_density, #6.4 make a moran plot using IDW ----
            listw = WS_idw,
            main = "Moran plot using IDW",
            xlab = "Population pensity",
-           ylab = "Spatially lag population density")
+           ylab = "Spatial lag population density")
 
 #Question 1----
 #Morans I is calculated by analyzing a value of a location compared to the locations neighbors. In a Moran I, you first calculate the spatial matrix to define the loactions neighborhood, after this you can calculate Morans I by using a moran.text and find the value.  
