@@ -143,7 +143,18 @@ moran.plot(fiveSS$pop_density, #6.4 make a moran plot using IDW ----
            xlab = "Population pensity",
            ylab = "Spatially lag population density")
 
+#Question 1----
+#Morans I is calculated by analyzing a value of a location compared to the locations neighbors. In a Moran I, you first calculate the spatial matrix to define the loactions neighborhood, after this you can calculate Morans I by using a moran.text and find the value.  
 
+#Question 2----
+#A spatially lagged variable is the weighted average of a the neighbors value in a certain area. 
 
+#Question 3----
+#In questions 5.1-5.4, I utilized a standard W through my calculations. This W assigns all neighbors an equal value, meaning they all have te same influence on the central veraible. using the IDW menthod however, does not assign all neighbors the same values, but rather assigns closer neighbors a stronger value and furhter neighbors a weaker value. 
+#This difference in methods might affect analysis by giving different spatial lag values between the two Moran plots. The Moran plot using the W queen continuity had a spatially lagged population density of 70-110, while the Moran plot using IDW had a spatailly lagged population density of 65-100. 
+
+#Question 4----
+#If an observation falls in the H-L quadrent, this means that the observation was an outlier. The H-L quadrent represents the High-Low area of a Moran plot, so if a value falls here, it signifies that the observation had a high value but a is surrounded by neighbors with low values. 
+#This may be useful to detect such observations because it detects spatial outliers within a data set, which can be a useful tool when wanting to identify outliers in a data set. Finding outliers in a data set can be useful in many different ways, and could be used to identify places of interest for study or errors in computation. 
 
 
