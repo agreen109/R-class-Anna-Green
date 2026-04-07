@@ -197,7 +197,10 @@ Using `terra::global()`, calculate and compare the **mean** CI value for:
 - The Sandusky Bay-masked raster (`sandusky_0816`)
 
 ```{r compare_stats, echo=TRUE, message=TRUE}
-# your code here
+mean_LE<-terra::global(august_ci, "mean",na.rm=TRUE)
+mean_sandusky<-terra::global(sandusky_0816, "mean",na.rm=TRUE)
+print(mean_LE)
+print(mean_sandusky)
 ```
 
 ### 2.4 Map it
@@ -209,7 +212,16 @@ Create a `tmap` map of `sandusky_0816`. Your map should include:
 - A scale bar
 
 ```{r map_sandusky, echo=TRUE, message=TRUE}
-# your code here
+library(tmap)
+tmap_mode("plot")
+tm_shape(sandusky_0816)+
+  tm_raster(palette="YlGn",
+            title="Cyanobacteria Index")+
+  tm_layout(main.title="Algal Blooms Intensity:Sandusky Bay AUgust 2017",
+            main.title.size=1,
+            lengend.outside=TRUE)+
+  tm_scale_bar(position=c("left","bottom"))+
+  tm_compass(position=c("right","top"))
 ```
 
 ### Questions for Task 2:
