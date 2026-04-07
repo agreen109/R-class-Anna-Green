@@ -63,15 +63,17 @@ library(fs)
 
 ### 1.1 Inventory your rasters
 
-Use `fs::dir_ls` with the parameter `regexp = "\\.tif$"` to get the file paths for all raster images in the `images/` directory. Store the result in an object called `raster_files`. Print the result — how many files are there?
+Use `fs::dir_ls` with the parameter `regexp = "\\.tif$"` to get the file paths for all raster images in the `images/` directory. Store the result in an object called `raster_files`. Print the result — how many files are there? There are 7 files
 
 ```{r list_files, echo=TRUE, message=TRUE}
-# your code here
+raster_files <-fs::dir_ls("erie_raster_ex/images/",regexp="\\.tif$")
+raster_files
+length(raster_files)
 ```
 
 ### 1.2 Inspect a single raster
 
-Load the first raster in your list using `terra::rast()`. Examine the following properties and record what you find:
+Load the first raster in your list using `terra::rast()`. Examine the following properties and record what you find: min=1 and max=252 for my single raster 
 
 - Coordinate reference system: `terra::crs()`
 - Spatial extent: `terra::ext()`
@@ -80,7 +82,13 @@ Load the first raster in your list using `terra::rast()`. Examine the following 
 - Range of cell values (use `terra::global()` with `"min"` and `"max"`)
 
 ```{r inspect_raster, echo=TRUE, message=TRUE}
-# your code here
+single_raster <-terra::rast(raster_files[1])
+terra::crs(single_raster)
+terra::ext(single_raster)
+terra::res(single_raster)
+terra::nlyr(single_raster)
+terra::global(single_raster,"min", na.rm=TRUE)
+terra::global(single_raster, "max", na.rm=TRUE)
 ```
 
 ### 1.3 Write a preprocessing function: `clean_cicyano()`
@@ -97,10 +105,25 @@ Write a function called `clean_cicyano(r)` that:
 *Hint: Your reclassification matrix should handle the no-detection case (0) and all sentinel codes (250 through 255). Review how `terra::classify()` uses a three-column matrix to specify `[from, to, becomes]` intervals. You may find `right = NA` useful here so boundary values like 0 and 250 are included in the intervals.*
 
 ```{r clean_function, echo=TRUE, message=TRUE}
-# your code here
+clean_cicyano <- function(r){
+  reclass_matrix<- matrix(c(0,0,NA,
+                            250,Inf,NA),
+                          ncol=3,
+                          byrow=TRUE)
+raster_cleaned<-terra::classify(r, reclass_matrix,right=NA)
+return(raster_cleaned)
+}
+
+
+raster_cleaned<-single_raster #test to compare the raw raster vs cleaned raster 
+raw_raster<-terra::global(single_raster, "range", na.rm=TRUE)
+cleaned_raster<-terra::global(raster_cleaned, "range",na.rm=TRUE)
+print(raw_raster)
+print(cleaned_raster)
 ```
 
 Test your function on the first raster. Verify it worked by comparing the global min/max of the raw raster vs. the cleaned raster.
+
 
 ### 1.4 Write a transform function: `dn_to_ci()`
 
@@ -111,7 +134,13 @@ $$CI = 10^{\left(\frac{3.0}{250.0} \times DN - 4.2\right)}$$
 Write a function called `dn_to_ci(r)` that takes a cleaned SpatRaster and returns a new raster with values transformed to CI units. You can apply a function to a raster using standard arithmetic operations or by passing a function to the raster.
 
 ```{r transform_function, echo=TRUE, message=TRUE}
-# your code here
+dn_to_ci<-function(r){
+  ci_raster<-10^((3.0/250.0)*r-4.2)
+  return(ci_raster)
+}
+
+dn_to_ci_test<-dn_to_ci(raster_cleaned) #test to versify function 
+terra::minmax(dn_to_ci_test)
 ```
 
 Test your function. What is the range of CI values in the transformed raster? Do they make physical sense given the data key?
@@ -133,7 +162,12 @@ Test your function. What is the range of CI values in the transformed raster? Do
 Load the `bb_erie_sandusky` shapefile from the `bounds/` directory using `sf::read_sf()`. Check its CRS. If it does not match the raster CRS, reproject it using `sf::st_transform()`.
 
 ```{r load_aoi, echo=TRUE, message=TRUE}
-# your code here
+area_interest<-sf::read_sf("erie_raster_ex/bounds/bb_erie_sandusky.shp")
+print(sf::st_crs(area_interest))
+print(terra::crs(single_raster))
+area_reproject<-sf::st_transform(area_interest,terra::crs(single_raster))
+glimpse(area_reproject)
+glimpse(area_interest)
 ```
 
 ### 2.2 Crop and mask
@@ -147,7 +181,12 @@ Using the **August 16–22, 2017** raster (`ts_2017.0816_0822`):
 Store your final result as `sandusky_0816`.
 
 ```{r crop_mask, echo=TRUE, message=TRUE}
-# your code here
+august_ras<-terra::rast("erie_raster_ex/images/ts_2017.0816_0822.L4.LE3.CIcyano.MAXIMUM_7day.tif")
+august_cleaned<-clean_cicyano(august_ras)
+august_ci<-dn_to_ci(august_cleaned)
+august_crop<-terra::crop(august_ci,area_reproject)
+sandusky_0816<-terra::mask(august_crop,area_reproject)
+plot(sandusky_0816) #to visualize and check code
 ```
 
 ### 2.3 Compare full vs. masked
