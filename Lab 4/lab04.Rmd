@@ -110,10 +110,12 @@ clean_cicyano <- function(r){
                             250,Inf,NA),
                           ncol=3,
                           byrow=TRUE)
-raster_cleaned<-terra::classify(r, reclass_matrix,right=NA)
+raster_cleaned<-classify(r, reclass_matrix,right=NA)
 return(raster_cleaned)
 }
 
+rclr<- matrix(c(0,0,NA,1,249,1,250,252,NA),ncol=3,byrow=TRUE)
+rclr
 
 raster_cleaned<-single_raster #test to compare the raw raster vs cleaned raster 
 raw_raster<-terra::global(single_raster, "range", na.rm=TRUE)
@@ -148,11 +150,13 @@ Test your function. What is the range of CI values in the transformed raster? Do
 ### Questions for Task 1:
 
 **Q1.1** What does the CRS of these rasters tell you about how distances and areas are measured? Would you need to reproject before calculating bloom area in square kilometers?
+The CRS of these rasters tells you about how distances and areas are measured by giving you the units of measurements within your data. You would need to reproject before calculating the bloom area in square kilometers, which makes sure that your units are in meters before calculating the bloom area in square kilometers. 
 
 **Q1.2** Why is it important to remove sentinel values *before* applying the DN-to-CI transform — rather than after? What would happen to a land pixel (value = 252) if you transformed it without cleaning first?
+It is important to remove sentinel values before applying the DN-to_CI transform rather than after because the sentinel values are not measurements but rather are marks on land that stand for a specific place on land. If you transformed a land pixel with a value of 252 without cleaning first, the DN-to-CI transform would treat that number as a real measurement, which would not make your data correct. 
 
 **Q1.3** Why is the `right = NA` argument useful in `terra::classify()` for this task?
-
+The right=NA argument is useful in terra::classify() for this task because it allows for you to select the variables you want to use. In 1.3, we used this function so that the boundaries 0 and 250 were included in the intervals, so this function is useful when wanting to use spepcific points in classifying a data set. 
 ---
 
 ## Task 2: Spatial subsetting — crop and mask
@@ -226,8 +230,10 @@ tm_shape(sandusky_0816)+
 ### Questions for Task 2:
 
 **Q2.1** In your own words, what is the difference between `terra::crop()` and `terra::mask()`? Why did we use both here instead of just one?
+terra::crop reduces the raster into smaller bounding boxes, whereas a terra::mask changes the value of the cells to either true or NA, making points that fall out of the shapes NA and everything inside the cells true. We used both here instead of just one because crop gives us more precise data boxes, then after we have a more precise bounding box we can use terra:mask to highlight the area of interest and assign NA to areas outside of our area of interest.
 
 **Q2.2** The mean CI value for Sandusky Bay is likely different from the full lake mean. What could explain this? Does this necessarily mean Sandusky Bay has more or less cyanobacteria than average?
+The mean CI value for Sandusky bay is likely different from the full lake mean because of differences in volumes and areas being studied. Sandusky bay is a smaller portion of the lake, so although it may have the same amount of cyanobacteria within it as the full lake, because the area of the bay is much smaller than the full lake, the cyanobacteria bloom seems to be larger in the bay. THis does not mean that Sandusky Bay has more or less cyanobacteria than average, but rather it could hold the same amount of cyanobacteria as the full lake but just in a smaller area. 
 
 ---
 
@@ -261,7 +267,7 @@ Organize the results into a data frame with at minimum two columns: `date` and `
 ```{r temporal_summary, echo=TRUE, message=TRUE}
 mean_CI<-terra::global(stack_rasters, fun="mean", na.rm=TRUE)
 dates<-four_rasters %>%
-  basename() %>% stringr::str_extract("\\d{4}")
+  basename() %>% stringr::str_extract("\\d{4}\\.\\d{4}")
 print(dates)
 combined_data<-data.frame(
   date=dates,
@@ -273,10 +279,17 @@ print(combined_data)
 
 ### 3.3 Plot the time series
 
-Using `ggplot2`, create a line or point plot showing mean CI values over time. Label your axes clearly. Which date in your dataset shows the highest mean bloom intensity?
+Using `ggplot2`, create a line or point plot showing mean CI values over time. Label your axes clearly. Which date in your dataset shows the highest mean bloom intensity? September 20th, 2017 had the highest intesity
 
 ```{r time_series_plot, echo=TRUE, message=TRUE}
-# your code here
+ggplot(mean_CI, aes(x=dates, y=mean))+
+  geom_line(color="orange")+
+  geom_point()+
+  labs(
+    title = "Mean CI values over time",
+    x="date",
+    y="Mean CI intensity"
+  ) +theme_minimal()
 ```
 
 ### 3.4 Binary bloom comparison
@@ -293,15 +306,23 @@ Map both results.
 *This requires careful logical thinking before writing code. Plan your approach in pseudocode first.*
 
 ```{r binary_comparison, echo=TRUE, message=TRUE}
-# your code here
+raster_early<-rast(four_rasters[[1]])
+raster_late<-rast(four_rasters[[2]])
+bloom_early<-terra::classify(raster_early, cbind(NA,0),others=1)
+bloom_late<-terra::classify(raster_late, cbind(NA,0),others=1)
+persistent_bloom<-(raster_early==1)&(raster_late==1)
+new_bloom<-(bloom_late==1)&(bloom_early==0)
+plot(persistent_bloom, main="persistant bloom",col=c("blue","lightblue"))
+plot(new_bloom, main="new bloom", col=c("white", "blue"))
 ```
 
 ### Questions for Task 3:
 
 **Q3.1** What are the limitations of using **mean CI value** as a measure of bloom severity across the whole lake? What would be a more robust alternative metric?
+Using a mean CI value as a measuer of bloom severity across the whole lake can be a major limitation, as the mean CI value does not take into account outliers in the dataset values, as well as distribution of blooms within the lake. If the mean of the lake is a certain value, that does not mean the bloom is that value across the whole lake. A more robust alternative metric would be to use a meaure that could give you the surface area of the blooms to help gain an understanding of the coverage of the blooms on a lake, or a way to tell where the outliers on the lake are in terms of bloom serverity, so find areas that have the most servere blooms. 
 
 **Q3.2** Stacking rasters with `c()` in terra creates a multi-layer SpatRaster. What requirement must all rasters meet in order to be stacked this way? (Think: extent, resolution, CRS.)
-
+All rasters must meet the requirements of having an identical bounding box, the same cell size, the same projection, and the same number of rows and columns in order to be stacked this way. 
 ---
 
 ## Task 4: Zonal analysis with areas of interest
@@ -311,7 +332,15 @@ Map both results.
 Use `list.files()` to get all `.shp` files from the `bounds/` directory. Load each with `sf::read_sf()`, then combine them into a single sf object using `dplyr::bind_rows()`. Make sure each polygon has an identifier — if not, add a column with the filename or AOI name.
 
 ```{r load_all_aois, echo=TRUE, message=TRUE}
-# your code here
+shapefiles_needed<-list.files(path="erie_raster_ex/bounds", pattern="\\.shp$",full.names=TRUE)
+temp_list<-list()
+for (i in 1:length(shapefiles_needed)) {
+  current_shp<-sf::read_sf(shapefiles_needed[i])+
+    current_shp$AOI<-basename(shapefiles_needed[i])+
+      temp_list[[i]]<-current_shp
+}
+  
+
 ```
 
 ### 4.2 Extract by area
