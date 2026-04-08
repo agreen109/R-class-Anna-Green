@@ -256,6 +256,8 @@ stack_rasters<-four_rasters %>%
   }) %>%
   terra::rast()
 print(stack_rasters)
+
+
 ```
 
 ### 3.2 Temporal summary
@@ -275,6 +277,8 @@ combined_data<-data.frame(
 )
 
 print(combined_data)
+
+
 ```
 
 ### 3.3 Plot the time series
@@ -315,6 +319,8 @@ persistent_bloom<-(raster_early==1)&(raster_late==1)
 new_bloom<-(bloom_late==1)&(bloom_early==0)
 plot(persistent_bloom, main="persistant bloom",col=c("blue","lightblue"))
 plot(new_bloom, main="new bloom", col=c("white", "blue"))
+
+
 ```
 
 ### Questions for Task 3:
@@ -333,11 +339,19 @@ All rasters must meet the requirements of having an identical bounding box, the 
 Use `list.files()` to get all `.shp` files from the `bounds/` directory. Load each with `sf::read_sf()`, then combine them into a single sf object using `dplyr::bind_rows()`. Make sure each polygon has an identifier — if not, add a column with the filename or AOI name.
 
 ```{r load_all_aois, echo=TRUE, message=TRUE}
-shapefiles_needed<-lapply(list.files(path="erie_raster_ex/bounds", pattern="\\.shp$",full.names=TRUE),
-                         sf::read_sf)
 
-combinedAOI<-dplyr::bind_rows(shapefiles_needed)
-glimpse(combinedAOI)
+list.files(path="erie_raster_ex/bounds", pattern="\\.shp$")
+
+a<-sf::read_sf("erie_raster_ex/bounds/bb_erie_islands.shp")
+b<-sf::read_sf("erie_raster_ex/bounds/bb_erie_large.shp")
+c<-sf::read_sf("erie_raster_ex/bounds/bb_erie_maumee.shp")
+d<-sf::read_sf("erie_raster_ex/bounds/bb_erie_sandusky_plus.shp")
+e<-sf::read_sf("erie_raster_ex/bounds/bb_erie_sandusky.shp")
+f<-sf::read_sf("erie_raster_ex/bounds/bb_erie_west_sister.shp")
+
+shapefiles<-dplyr::bind_rows(a,b,c,d,e,f)
+
+
 ```
 
 ### 4.2 Extract by area
@@ -347,18 +361,10 @@ Using the date you identified in Task 3.3 as having the highest mean bloom inten
 *Tip: `terra::extract()` returns a data frame. The `ID` column links rows to the AOI that was used for extraction. You can use `group_by()` and `summarize()` to aggregate.*
 
 ```{r zonal_extract, echo=TRUE, message=TRUE}
-print(combined_data)
-print(mean_CI)
-extracted_df<-terra::extract(mean_CI,combinedAOI)
-
-
-
-
-
-
-
-
-
+sf::st_transform(all_aois, crs = 32617)
+aoi_vec<-terra::vect(all_aois)
+area_int <- terra::extract(four_rasters[[4]], all_aois, 
+                              fun = function(x) c(mean = mean(x, na.rm=TRUE), max = max(x, na.rm=TRUE)))
 
 
 ```
@@ -382,17 +388,25 @@ Create a `tmap` map showing the CI raster for your chosen date with the AOI boun
 ### Questions for Task 4:
 
 **Q4.1** You may have gotten `NA` values in your `terra::extract()` results for some AOIs. What could cause this? Name at least two reasons.
+Getting NA values in the terra::extract results for some AOIs can be caused by missing data within the raster, which could result in NA since the data is not present, or if there are no overlaps in the AOI shape, this can also lead to NA results.  
 
 **Q4.2** Looking at the spatial distribution of your AOIs on the map, which areas do you expect to be most prone to severe blooms, and why? (Consider geography, hydrology, land use in the Lake Erie watershed.)
-
+I expect areas closer to the edge of the lake to be more prone to severe bloom because of exposure to runoff, and shallower waters which can in turn make for higher water temperatures within those areas. 
 ---
 
 
 ## Questions
 
 1. Throughout this lab you have been working with **raster** data. In what ways was the analysis workflow different from working with vector data (like you did in Labs 1–3)? What concepts translated directly, and what was fundamentally different?
+The analysis workflow in this lab was different then working with vector data because 
 
 2. Cyanobacteria blooms are affected by temperature, nutrient runoff, and lake circulation. Based on the temporal patterns you observed in Task 3, does the timing of peak bloom match what you would expect ecologically? Explain your reasoning (I know you're not an expert on blooms - just demonstrate thinking).
+The timing of peak blooms from my four data points kinda goes opposite of what I would expect. In my data set, the blooms peaked from August to September. From what I know on algea blooms, I would expect the peak of the bloom to be in August when the temperatures are warmer than Spetember, but my dataset showed that the peak bloom was in September. 
 
 3. We used `terra::extract()` in Task 4 to perform a zonal summary. How does this relate conceptually to the **zonal operations** category of map algebra discussed in class?
+
+
+
+
+
 
