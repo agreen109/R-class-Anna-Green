@@ -114,8 +114,8 @@ raster_cleaned<-classify(r, reclass_matrix,right=NA)
 return(raster_cleaned)
 }
 
-rclr<- matrix(c(0,0,NA,1,249,1,250,252,NA),ncol=3,byrow=TRUE)
-rclr
+reclass<- matrix(c(0,0,NA,1,249,1,250,252,NA),ncol=3,byrow=TRUE)
+reclass
 
 raster_cleaned<-single_raster #test to compare the raw raster vs cleaned raster 
 raw_raster<-terra::global(single_raster, "range", na.rm=TRUE)
@@ -279,7 +279,7 @@ print(combined_data)
 
 ### 3.3 Plot the time series
 
-Using `ggplot2`, create a line or point plot showing mean CI values over time. Label your axes clearly. Which date in your dataset shows the highest mean bloom intensity? September 20th, 2017 had the highest intesity
+Using `ggplot2`, create a line or point plot showing mean CI values over time. Label your axes clearly. Which date in your dataset shows the highest mean bloom intensity? 
 
 ```{r time_series_plot, echo=TRUE, message=TRUE}
 ggplot(mean_CI, aes(x=dates, y=mean))+
@@ -290,6 +290,7 @@ ggplot(mean_CI, aes(x=dates, y=mean))+
     x="date",
     y="Mean CI intensity"
   ) +theme_minimal()
+
 ```
 
 ### 3.4 Binary bloom comparison
@@ -332,15 +333,11 @@ All rasters must meet the requirements of having an identical bounding box, the 
 Use `list.files()` to get all `.shp` files from the `bounds/` directory. Load each with `sf::read_sf()`, then combine them into a single sf object using `dplyr::bind_rows()`. Make sure each polygon has an identifier — if not, add a column with the filename or AOI name.
 
 ```{r load_all_aois, echo=TRUE, message=TRUE}
-shapefiles_needed<-list.files(path="erie_raster_ex/bounds", pattern="\\.shp$",full.names=TRUE)
-temp_list<-list()
-for (i in 1:length(shapefiles_needed)) {
-  current_shp<-sf::read_sf(shapefiles_needed[i])+
-    current_shp$AOI<-basename(shapefiles_needed[i])+
-      temp_list[[i]]<-current_shp
-}
-  
+shapefiles_needed<-lapply(list.files(path="erie_raster_ex/bounds", pattern="\\.shp$",full.names=TRUE),
+                         sf::read_sf)
 
+combinedAOI<-dplyr::bind_rows(shapefiles_needed)
+glimpse(combinedAOI)
 ```
 
 ### 4.2 Extract by area
@@ -350,7 +347,20 @@ Using the date you identified in Task 3.3 as having the highest mean bloom inten
 *Tip: `terra::extract()` returns a data frame. The `ID` column links rows to the AOI that was used for extraction. You can use `group_by()` and `summarize()` to aggregate.*
 
 ```{r zonal_extract, echo=TRUE, message=TRUE}
-# your code here
+print(combined_data)
+print(mean_CI)
+extracted_df<-terra::extract(mean_CI,combinedAOI)
+
+
+
+
+
+
+
+
+
+
+
 ```
 
 ### 4.3 Summary table
