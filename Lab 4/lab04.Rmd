@@ -275,7 +275,7 @@ combined_data<-data.frame(
   date=dates,
   mean_CI=mean_LE$mean
 )
-
+print(dates[[4]])
 print(combined_data)
 
 
@@ -342,15 +342,15 @@ Use `list.files()` to get all `.shp` files from the `bounds/` directory. Load ea
 
 list.files(path="erie_raster_ex/bounds", pattern="\\.shp$")
 
-a<-sf::read_sf("erie_raster_ex/bounds/bb_erie_islands.shp")
-b<-sf::read_sf("erie_raster_ex/bounds/bb_erie_large.shp")
-c<-sf::read_sf("erie_raster_ex/bounds/bb_erie_maumee.shp")
-d<-sf::read_sf("erie_raster_ex/bounds/bb_erie_sandusky_plus.shp")
-e<-sf::read_sf("erie_raster_ex/bounds/bb_erie_sandusky.shp")
-f<-sf::read_sf("erie_raster_ex/bounds/bb_erie_west_sister.shp")
+first<-sf::read_sf("erie_raster_ex/bounds/bb_erie_islands.shp")
+second<-sf::read_sf("erie_raster_ex/bounds/bb_erie_large.shp")
+third<-sf::read_sf("erie_raster_ex/bounds/bb_erie_maumee.shp")
+fourth<-sf::read_sf("erie_raster_ex/bounds/bb_erie_sandusky_plus.shp")
+fifth<-sf::read_sf("erie_raster_ex/bounds/bb_erie_sandusky.shp")
+sixth<-sf::read_sf("erie_raster_ex/bounds/bb_erie_west_sister.shp")
 
-shapefiles<-dplyr::bind_rows(a,b,c,d,e,f)
-
+shapefiles<-dplyr::bind_rows(first,second,third,fourth,fifth,sixth)
+glimpse(shapefiles)
 
 ```
 
@@ -361,12 +361,18 @@ Using the date you identified in Task 3.3 as having the highest mean bloom inten
 *Tip: `terra::extract()` returns a data frame. The `ID` column links rows to the AOI that was used for extraction. You can use `group_by()` and `summarize()` to aggregate.*
 
 ```{r zonal_extract, echo=TRUE, message=TRUE}
-sf::st_transform(all_aois, crs = 32617)
-aoi_vec<-terra::vect(all_aois)
-area_int <- terra::extract(four_rasters[[4]], all_aois, 
-                              fun = function(x) c(mean = mean(x, na.rm=TRUE), max = max(x, na.rm=TRUE)))
 
+all_aois <- sf::st_transform(shapefiles, crs = 32617)
+glimpse(all_aois)
+sf::st_make_valid(all_aois)
+aoi_vec<- terra::vect(all_aois)
 
+all_aois <- sf::st_transform(all_aois, crs = 32617) 
+all_aois<-sf::st_make_valid(all_aois)
+aoi_vec  <- terra::vect(all_aois)
+
+area_interest <- terra::extract(combined_data, all_aois, 
+                              fun = function(x)c(mean = mean(x, na.rm=TRUE), max = max(x, na.rm=TRUE)))
 ```
 
 ### 4.3 Summary table
@@ -374,7 +380,15 @@ area_int <- terra::extract(four_rasters[[4]], all_aois,
 Present your results as a clean summary table. Which AOI had the highest mean CI value on that date? Which had the highest maximum?
 
 ```{r summary_table, echo=TRUE, message=TRUE}
-# your code here
+summary_table<-all_aois %>%
+  group_by(AOI)%>%
+  summarise(
+    meanCI=mean(CI, na.rm=TRUE),
+    maxCI=max(CI, na.rm=TRUE)
+  )
+
+highest_mean<-summary_table%>%filter(meanCI==max(mean_CI))
+highest_max<-summary_table%>%filter(maxCI==mean(maxCI))
 ```
 
 ### 4.4 Map with AOI overlays
@@ -382,7 +396,12 @@ Present your results as a clean summary table. Which AOI had the highest mean CI
 Create a `tmap` map showing the CI raster for your chosen date with the AOI boundaries overlaid. Use `tm_borders()` for the boundaries and label them if possible.
 
 ```{r map_with_aois, echo=TRUE, message=TRUE}
-# your code here
+tm_shape(area_interest) + 
+  tm_raster(title = "CI Value")+ 
+  tm_shape(shapefiles)+ 
+  tm_borders(col = "lightblue")+ 
+  tm_text("boundaries")+
+  tm_layout(main.title = "CI raster 0920 with AOI boundaries overlaid", legend.outside = TRUE)
 ```
 
 ### Questions for Task 4:
@@ -398,13 +417,13 @@ I expect areas closer to the edge of the lake to be more prone to severe bloom b
 ## Questions
 
 1. Throughout this lab you have been working with **raster** data. In what ways was the analysis workflow different from working with vector data (like you did in Labs 1–3)? What concepts translated directly, and what was fundamentally different?
-The analysis workflow in this lab was different then working with vector data because 
+The analysis workflow in this lab was different then working with vector data because vector data are specific points in a data set within a cell or gird whereas rasters are composed of points, lines, and polygons. Because the vectors are not made up of one specific points but rather is a path, it is very different working with vectors then working with rasters.  
 
 2. Cyanobacteria blooms are affected by temperature, nutrient runoff, and lake circulation. Based on the temporal patterns you observed in Task 3, does the timing of peak bloom match what you would expect ecologically? Explain your reasoning (I know you're not an expert on blooms - just demonstrate thinking).
 The timing of peak blooms from my four data points kinda goes opposite of what I would expect. In my data set, the blooms peaked from August to September. From what I know on algea blooms, I would expect the peak of the bloom to be in August when the temperatures are warmer than Spetember, but my dataset showed that the peak bloom was in September. 
 
 3. We used `terra::extract()` in Task 4 to perform a zonal summary. How does this relate conceptually to the **zonal operations** category of map algebra discussed in class?
-
+Although I could not get the terra::extract to work in task 4 to perform a zonal summary, this can relate conceptually to the zonal operations category of map algebra discussed in class because the zonal operation of map algebra summarized the raster cell values based off the zone they are in. The terra::extract in task four also acts as a way to algebraically summarize raster cells based on the zones they are in within a shape, so this function is similar to the zonal operations we discussed in class. 
 
 
 
