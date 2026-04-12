@@ -347,7 +347,7 @@ second<-sf::read_sf("erie_raster_ex/bounds/bb_erie_large.shp")
 third<-sf::read_sf("erie_raster_ex/bounds/bb_erie_maumee.shp")
 fourth<-sf::read_sf("erie_raster_ex/bounds/bb_erie_sandusky_plus.shp")
 fifth<-sf::read_sf("erie_raster_ex/bounds/bb_erie_sandusky.shp")
-sixth<-sf::read_sf("erie_raster_ex/bounds/bb_erie_west_sister.shp")
+sixth<-sf::read_sf("erie_raster_ex/bounds/bb_erie_west_sister.shp") %>% st_zm(drop = T)
 
 shapefiles<-dplyr::bind_rows(first,second,third,fourth,fifth,sixth)
 glimpse(shapefiles)
@@ -362,17 +362,19 @@ Using the date you identified in Task 3.3 as having the highest mean bloom inten
 
 ```{r zonal_extract, echo=TRUE, message=TRUE}
 
-all_aois <- sf::st_transform(shapefiles, crs = 32617)
+all_aois <- sf::st_transform(shapefiles, crs = 32617) %>% st_make_valid()
 glimpse(all_aois)
-sf::st_make_valid(all_aois)
+
 aoi_vec<- terra::vect(all_aois)
 
 all_aois <- sf::st_transform(all_aois, crs = 32617) 
 all_aois<-sf::st_make_valid(all_aois)
 aoi_vec  <- terra::vect(all_aois)
 
-area_interest <- terra::extract(combined_data, all_aois, 
+area_interest <- terra::extract(sandusky_0816, aoi_vec, 
                               fun = function(x)c(mean = mean(x, na.rm=TRUE), max = max(x, na.rm=TRUE)))
+
+print(area_interest)
 ```
 
 ### 4.3 Summary table
