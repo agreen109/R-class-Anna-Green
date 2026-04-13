@@ -258,9 +258,17 @@ Group 3 was responsible for integrating the DEM, adding layout elements, and com
 Load `neoh_dem.tif` using `terra::rast()`.
 
 Before cropping, **project** it to match the CRS of `sa` using `terra::project()`. Then crop to the study area extent. Add a comment explaining your workflow choices.
-
+#!!need to add comment!!!!!! ----
 ```{r dem, echo=TRUE, message=TRUE}
-# your code here
+dem <- rast("neoh_dem.tif")
+
+dem_sa <- dem %>%
+  terra::project(crs(sa)) %>%
+  terra::crop(vect(sa)) %>%
+  terra::mask(vect(sa))
+
+
+print(dem_sa)
 ```
 
 *Tip: Projecting a large raster can be slow. Cropping AFTER projecting (as shown here) crops the projected version; cropping BEFORE projecting (to a smaller area first) can be faster. There are trade-offs — consider what's appropriate here.*
@@ -278,7 +286,22 @@ Now build a more complete version of the local map that incorporates the DEM. Re
 Store this as `map_local_elev`.
 
 ```{r map_local_elev, echo=TRUE, message=TRUE}
-# your code here
+map_local_elev <- tm_shape(dem_sa) +
+  tm_raster(palette = "terrain", title = "Elevation", style = "cont") +
+  tm_shape(sa) + 
+  tm_polygons(alpha = 0.3, border.col = "black", lwd = 2) + 
+  parks_layer +
+  tm_shape(water_sa) +
+  tm_lines(
+    col = "intersects_park", 
+    palette = c("FALSE" = "lightgreen", "TRUE" = "darkgreen"), 
+    lwd = 1.5,
+    legend.show = FALSE # Optional: hide to avoid clutter
+  ) +
+  places_layer +
+  tm_compass(position = c("right", "top")) +
+  tm_scalebar(position = c("left", "bottom")) +
+  tm_layout(main.title = "Portage & Summit Counties")
 
 map_local_elev
 ```
@@ -298,7 +321,7 @@ This task has two parts. The first uses `tmap_arrange()` — a straightforward a
 Use `tmap_arrange()` to display `map_ohio` and `map_local_elev` side by side. Experiment with the `ncol` and `asp` arguments to get a reasonable layout.
 
 ```{r tmap_arrange, echo=TRUE, message=TRUE}
-# your code here
+tmap_arrange(map_ohio, map_local_elev, ncol = 2, widths = c(0.4, 0.6))
 ```
 
 **Reflection question 4 (answer in your repo):** `tmap_arrange()` is easy to use, but it has real limitations compared to a true inset. What are at least two limitations? (Think about how the two maps relate spatially and what information is or isn't communicated.)
@@ -315,8 +338,8 @@ Below is a partially complete code skeleton. **Read every comment carefully** be
 # This is the small map of all of Ohio that shows where our study area is.
 # oh_region is the bounding box polygon you created in Task 2.1.
 
-map_inset <- tm_shape(___) + tm_polygons() +        # fill in: all Ohio counties
-  tm_shape(oh_region) + tm_borders(lwd = ___, col = "red") +  # fill in: border width
+map_inset <- tm_shape(oh_counties_joined) + tm_polygons(col="white") +        # fill in: all Ohio counties
+  tm_shape(oh_region) + tm_borders(lwd = 2, col = "red") +  # fill in: border width
   tm_layout(bg.color = "lightblue") +
   tm_scalebar(position = c("left", "bottom"))
 
@@ -339,8 +362,8 @@ norm_dim <- function(obj) {
 # Calculate dimensions for both maps
 # The main map is based on the study area bounding box (oh_region)
 # The inset map is based on all of Ohio
-main_dim <- norm_dim(___)  # fill in: use oh_region
-ins_dim  <- norm_dim(___)  # fill in: use the all-Ohio sf object
+main_dim <- norm_dim(oh_region)  # fill in: use oh_region
+ins_dim  <- norm_dim(oh_counties_joined)  # fill in: use the all-Ohio sf object
 
 
 # ---- Step 3: Define viewport positions ----
