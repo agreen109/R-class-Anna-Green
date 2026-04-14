@@ -282,6 +282,42 @@ m.both
 - When the user "mouses over" a polygon, a pop-up with the county name and population density should appear
 - Place a legend in the bottom-right corner
 
+library(sf)
+library(tidyverse)
+
+library(terra)
+library(tmap)
+
+library(grid)
+oh_counties <- st_read("oh_counties.gpkg")
+oh_census <- read_csv("oh_counties_DP2020.csv")
+
+
+oh_census <- oh_census %>%
+  mutate(geoid = str_sub(as.character(geoid), -5))
+
+glimpse(oh_counties)
+oh_counties <- oh_counties %>%
+  mutate(geoid=as.character(GEOID))
+
+oh_counties_joined <- oh_counties %>%
+  left_join(oh_census, by = "geoid")
+
+nrow(oh_counties_joined)
+glimpse(oh_counties_joined)
+
+map_ohio <- tm_shape(oh_counties_joined) +
+  tm_polygons(
+    col = "female_age", 
+    style = "jenks",        
+    n = 5,                  
+    palette = "Blues",
+    title = "Percentage of females ages 20-24 in the total population" 
+  ) +
+  tm_borders(col = "lavender", lwd = 1.2, lty = "solid") +
+  tm_scalebar(position = c("left", "top")) +
+  tm_layout(frame = FALSE)
+
 #### Extra challenges: 
 1. Add a minimap to the interface
 2. Add a "locate me" button to the interface

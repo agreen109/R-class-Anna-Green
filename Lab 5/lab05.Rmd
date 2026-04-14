@@ -144,7 +144,8 @@ Filter the county geometry to Portage and Summit counties. Store the result as `
 
 ```{r study_area, echo=TRUE, message=TRUE}
 sa <- oh_counties_joined %>%
-  filter(NAME %in% c("Portage", "Summit"))
+  filter(NAME %in% c("Portage", "Summit")) %>% 
+  st_make_valid()
 
 oh_region <- st_as_sfc(st_bbox(sa))
 ```
@@ -160,24 +161,25 @@ Build a map layer showing municipal boundaries with text labels for place names.
 oh_places <- st_read("oh_places.gpkg")
 
 places_sa <- oh_places %>%
-  st_transform(st_crs(sa)) %>%
   st_make_valid()%>%
-  st_intersection(sa)%>%
-  st_make_valid()
-print(places_sa)
+  st_transform(st_crs(sa)) %>%
+  st_intersection(sa) 
+places_sa
 
-places_layer <- tm_shape(places_sa_clean) +
-  tm_borders(col = "darkblue", lty = "solid") +
-  tm_text("NAME", size = 0.2, remove.overlap = TRUE)
 
 places_sa$validity_check<-st_is_valid(places_sa, reason=TRUE)
 invalid_rows<-places_sa[places_sa$validity_check !="Valid Geometry",]
 print(invalid_rows)
 
 places_sa_clean<-places_sa%>%
-  filter(st_is_valid(.))
+  filter(st_is_valid(.)) 
 
-print(places_layer)
+places_layer <- tm_shape(places_sa) +
+  tm_borders(col = "darkblue", lty = "solid") +
+  tm_text("NAME", size = 0.2, remove.overlap = T) 
+
+
+places_layer
 ```
 
 *Note: You may want to adjust label size or use `tm_text(size = ...)` to avoid overlap. This often requires experimentation.*
@@ -391,7 +393,7 @@ ins_vp <- viewport(
 grid.newpage()
 print(map_local_elev, vp = main_vp)
 pushViewport(main_vp)
-print(map_inset, vp = ins_vp)
+print(map_inset, vp = ins_vp) #this function does not work if you run the section as a whole, but runs if you run the section one by one? 
 ```
 
 Your first attempt will not look perfect — that is expected and intentional. You will need to:
@@ -418,7 +420,41 @@ Using whatever spatial data, extent, and domain you choose, create an original s
 You may use data from any of the course datasets (CBW, Ohio, Lake Erie) or data you obtain independently. If using external data, document the source in a comment.
 
 ```{r your_map, echo=TRUE, message=TRUE}
-# your code here
+my_dem <- rast("neoh_dem.tif")
+my_places <- st_read("oh_places.gpkg") %>%
+    st_transform(crs(my_dem))
+
+my_dem
+my_places
+oh_counties_joined
+
+tus_county <- oh_counties_joined %>% 
+    filter(NAME == "Tuscarawas") %>%
+    st_transform(crs(my_dem))
+
+tus_county
+
+my_places_tus <- st_intersection(my_places, tus_county)
+my_dem_tus <- terra::crop(my_dem, vect(tus_county)) %>% terra::mask(vect(tus_county))
+
+final_map <- tm_shape(my_dem_tus) +
+  tm_raster(palette = "terrain", title = "Elevation", style = "cont")+
+  tm_shape(tus_county) +
+  tm_borders(col = "black", lwd = 2) +
+  tm_shape(my_places_tus) +
+  tm_polygons(col = "white", style = "quantile", palette = "Reds", title = "2020 Population", alpha = 0.8) +
+  tm_compass(position = c("right", "top")) +
+  tm_scalebar(position = c("left", "bottom")) +
+  tm_layout(
+    main.title = "Tuscarawas County: Population Density over Elevation",
+    bg.color = "white",
+    legend.outside = TRUE
+  )
+
+final_map
+
+
+
 ```
 
 ---
