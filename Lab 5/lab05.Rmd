@@ -87,7 +87,7 @@ nrow(oh_counties_joined)
 glimpse(oh_counties_joined)
 ```
 
-Verify the join worked: how many rows does your joined object have? 88 rows Does it match what you'd expect? Yes
+Verify the join worked: how many rows does your joined object have? 88 rows Does it match what you'd expect? Yes, it does match what I would expect. 
 
 ### 1.2 — Choose and justify a variable
 
@@ -98,7 +98,7 @@ oh_counties_joined <- oh_counties_joined %>%
   mutate(female_age = (f20to24 / female) * 100)
 glimpse(oh_counties_joined)
 
-#The variable added represents the percentage of females age 20-24 out of the total female population within the dat set. I find this interesting because that is the age reange I am in, so its interesting to see what percentage my age group makes up in a population. 
+#The variable added represents the percentage of females age 20-24 out of the total female population within the data set. I find this interesting because that is the age reange I am in, so its interesting to see what percentage my age group makes up in a population. 
 ```
 
 ### 1.3 — Build the Ohio-scale map
@@ -129,6 +129,7 @@ map_ohio
 ```
 
 **Reflection question 1 (answer in your repo):** Justify your choice of classification method. How would the map's message change if you used a different method? Reference specific class boundaries in your answer.
+My choice of classificiation scheme was Jenks with 5 classes. I feel that this method is best for my data set, as jenks style helps optimize the breaks between my classes to better break apart my classes. I chose five classes as I felt it have enough breaks within my data set to make a structured Chloropleth map withoput adding too many breaks that there is not much variation within the classes. The maps message would change if I used different methods as the classes could be broken up into different amounts and have different breaks within my data set. If I changed my n=6, the map would be broken up into 6 groups instead of 5, making the percentage different within each group smaller. 
 
 ---
 
@@ -247,6 +248,8 @@ map_local
 
 **Reflection question 2 (answer in your repo):** Describe the cartographic decisions you made about visual hierarchy in this map. Which features should visually dominate, and what specific symbol choices (size, color, transparency) did you make to achieve that? Why?
 
+For my visuals in this map, I felt that the park type and the municipal bouandries were at the top of the visual hierarchy. For these features, I chose colors and boarder weights that I felt helped the features stand out against the counties. For park interects, I wanted true to stand out more than false as I felt it was more relevant information, so I made that color a darker color to stand out within the map. These features as a whole I feel like were the most important within this map, because without them, you would not be able to read key features of this map and understand what the map is trying to explain. 
+
 ---
 
 ## Task 3: Raster integration and layout elements
@@ -260,7 +263,7 @@ Group 3 was responsible for integrating the DEM, adding layout elements, and com
 Load `neoh_dem.tif` using `terra::rast()`.
 
 Before cropping, **project** it to match the CRS of `sa` using `terra::project()`. Then crop to the study area extent. Add a comment explaining your workflow choices.
-#!!need to add comment!!!!!! ----
+
 ```{r dem, echo=TRUE, message=TRUE}
 dem <- rast("neoh_dem.tif")
 
@@ -271,6 +274,8 @@ dem_sa <- dem %>%
 
 
 print(dem_sa)
+
+#first i used rast() to create a spatraster from the neoh_dem.tif file. Then I used terra::project to match my new spatraster to the crs of sa. Next I used terra::crop to focus on my arrea of interest within the data set. Then finally, I used terra::mask to isolate my aoi and mask the other values. 
 ```
 
 *Tip: Projecting a large raster can be slow. Cropping AFTER projecting (as shown here) crops the projected version; cropping BEFORE projecting (to a smaller area first) can be faster. There are trade-offs — consider what's appropriate here.*
@@ -296,20 +301,21 @@ map_local_elev <- tm_shape(dem_sa) +
   tm_shape(water_sa) +
   tm_lines(
     col = "intersects_park", 
-    palette = c("FALSE" = "lightgreen", "TRUE" = "darkgreen"), 
+    palette = c("FALSE" = "green", "TRUE" = "darkgreen"), 
     lwd = 1.5,
     legend.show = FALSE 
   ) +
   places_layer +
   tm_compass(position = c("right", "top")) +
   tm_scalebar(position = c("left", "bottom")) +
-  tm_layout(main.title = "Portage & Summit Counties")
+  tm_layout(main.title = "Portage and Summit Counties")
 
 map_local_elev
 ```
 
 **Reflection question 3 (answer in your repo):** How does adding the elevation layer change the map's visual story? Did it create any visual hierarchy problems, and if so, how did you address them?
 
+By adding the elevation layer, the maps visual story goes from a flat, more 2d kinda map to a more 3d, topographic map. By adding elevation, you can gain an understanding of what the topography of certain communties and parks are on, adding another layer to the map. It did create some visual hierarchy problems as the variance in colors based off the elevation made it harder to see some of the maps components, so I addressed this issues by changing the color of some of my map features as well as line weight to help make these features stand out against the varying background color. 
 ---
 
 ## Task 4: Multi-panel arrangement and inset maps
@@ -327,6 +333,8 @@ tmap_arrange(map_ohio, map_local_elev, ncol = 2, widths = c(0.4, 0.6))
 ```
 
 **Reflection question 4 (answer in your repo):** `tmap_arrange()` is easy to use, but it has real limitations compared to a true inset. What are at least two limitations? (Think about how the two maps relate spatially and what information is or isn't communicated.)
+
+The first limitation of tmap_arrange is that you cannot overlap maps, so you can not place one map inside of another, but rather can only place them side by side with no overlap. A second limitation is that since you cannot overlap maps, this causes limitation on showing how the maps are correlated. If you did not know ohio and the two counties portage and summit county, it would cause a major limitation to the viewer becuase the do not see the correlation between the two side by side maps. 
 
 ### 4.2 — Building the inset map
 
@@ -406,6 +414,8 @@ Your first attempt will not look perfect — that is expected and intentional. Y
 
 **Reflection question 5 (answer in your repo):** In your own words, explain what `norm_dim()` is doing and why it is necessary. What specific visual problem would occur if you skipped that step and passed the raw coordinate extents to `viewport()` directly?
 
+the function nor_dim is used to calculate the dimesions of the map area and simplify it into coordinates from 0-1. This function is neccessary because the function allows your map elements to scale to your map. Without norm_dim and going directly through viewport, the elements on your map such as your title and scale could be plotted outside of the maps frame as the dimaensions of the map area are much larger then the screen. 
+
 ---
 
 ## Task 5: Your own static map
@@ -420,9 +430,9 @@ Using whatever spatial data, extent, and domain you choose, create an original s
 You may use data from any of the course datasets (CBW, Ohio, Lake Erie) or data you obtain independently. If using external data, document the source in a comment.
 
 ```{r your_map, echo=TRUE, message=TRUE}
-library(terra)
+
 dem <- rast("neoh_dem.tif")
-file.exists("neoh_dem.tif")
+file.exists("neoh_dem.tif") #was having trouble getting this to open here so tested it, but text proved that file does exist, then it ran for some reason? 
 places <- st_read("oh_places.gpkg")
 
 dem
@@ -453,12 +463,17 @@ my_static_map
 ## Questions
 
 1. Describe and justify your cartographic choices in Task 1 (Ohio choropleth). Specifically address: your classification method, your color palette, and how these choices serve the map's intended communication goal. Would the map tell a different story with different choices?
+In task one, I chose my cartographic choices because I felt they provided the best visual representation of my data. I chose to use jenks style because i felt this style provided the best layout of map map data to make it easy to read. I chose my color palette as blues because blue is my favorite color, and I feel the different variations of blue represented the variety within my data set well. The map would absolutely tell a different story with different choices, as any change to a map feature can completely change what the map is representing.  
+
 
 2. In Task 2.4 you identified stream segments that intersect parks. Describe your approach step by step, as if explaining it to a classmate who hasn't done spatial data analysis before. Why is this distinction cartographically meaningful (*i.e., why might a map reader care which streams run through parks)?
+My first step was to read the two files needed for the stream segements and assign them to a variable. Next, I binded the row water_portage from one data set to the water_summit row in the other data set. I then transformed both of the data sets to match the crs of the sa function. Finally, I made a new column in my water feature data frame by using mutate to show that streams that streams that do intersect parks will equal true, and streams that do not will equal false. A map reader may care about which streams run through parks so maybe plan a specific hike through a park to see a specific stream. or to see where potential flood risks in parks may be. 
 
 3. In Task 4, you used both `tmap_arrange()` and the `grid` viewport approach to create multi-panel maps. What are the trade-offs between these two methods? In what professional or analytical context would you prefer one over the other?
+By using tmap_arrange, you can quickly arrange map objects into a single component, but is less flexible on how the components are placed. By using grid, you can control the layout of your map more, but it is more complex code wise compared to tmap_arrange. If you had an analystic context or professional need that did not require precise placement of map components or dat components, then tmap_arrange would work good and save you time, but if you needed a more precise, complex map, grid would be a better option. 
 
 4. Compare the cartographic decisions you made individually in this lab to the decisions your group made collectively during the in-class frankenmap exercise. Where did your choices diverge, and what explains the difference?
+My choices were much differnt then in class, as the in class fraken map components and cartographic decisions were not made a collective whole, but rather was deciede by the group, and so the made did not cohesively go together at the end of the exercise. Choices such as color pallete, line weight, scales, and map elements were all different during the fraken map exercise in class simply because of lack of communication between the groups. In this lab, I tried to make decisions that helped my map become cohesive in the end, which is what made my map different from the in class map. 
 
 5. Describe your original map in Task 5: what spatial story are you trying to tell, did you achieve your communication goal, and what would you change given more time?
-
+My roiginal class map in task five shows the urban boundaries in northeast ohio along with the elevation of north east ohio in meters. Through this map, I was trying to show what the different elevations of urban areas are compared to the surrounding urban areas within north east ohio. I felt like I did achieve my communication goal, but in a simplified may setting. If I had more time for this project, I would have liked to pull data from other datasets rather then the datasets we used within this lab, but definetly would have needed more time and time to ask questions in class to do so. 
