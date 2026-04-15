@@ -431,27 +431,20 @@ places
 
 dem_proj <- project(dem, crs(places))
 
-slp <- terrain(dem_proj, "slope", unit = "radians")
-asp <- terrain(dem_proj, "aspect", unit = "radians")
-hill <- shade(slp, asp, angle = 45, direction = 315)
-
-map_idea1 <- tm_shape(hill) +
-  tm_raster(palette = "-Greys", legend.show = FALSE, alpha = 0.7) + # Base hillshade
-  tm_shape(dem_proj) +
-  tm_raster(palette = "terrain", alpha = 0.5, title = "Elevation (m)") + # Color elevation
+my_static_map <-tm_shape(dem_proj) +
+  tm_raster(palette = "terrain", alpha = 0.5, title = "Elevation in meters") + 
   tm_shape(places) +
-  tm_borders(col = "black", lwd = 1.5, lty = "dashed") + # City limits
-  # tm_shape(roads) + tm_lines(col = "red", lwd = 1) + # Add roads if available
+  tm_borders(col = "darkblue", lwd = 1, lty = "solid") + 
   tm_layout(
-    title = "Topography and Urban Boundaries in Northeast Ohio",
+    title = "Elevation and Urban Boundaries in Northeast Ohio",
     title.position = c("left", "top"),
     legend.position = c("right", "bottom"),
-    frame = TRUE
+    frame = FALSE
   ) +
   tm_compass(position = c("left", "bottom")) +
   tm_scalebar(position = c("left", "bottom"))
 
-map_idea1
+my_static_map
 
 ```
 
