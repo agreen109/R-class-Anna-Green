@@ -298,7 +298,7 @@ map_local_elev <- tm_shape(dem_sa) +
     col = "intersects_park", 
     palette = c("FALSE" = "lightgreen", "TRUE" = "darkgreen"), 
     lwd = 1.5,
-    legend.show = FALSE # Optional: hide to avoid clutter
+    legend.show = FALSE 
   ) +
   places_layer +
   tm_compass(position = c("right", "top")) +
@@ -420,40 +420,38 @@ Using whatever spatial data, extent, and domain you choose, create an original s
 You may use data from any of the course datasets (CBW, Ohio, Lake Erie) or data you obtain independently. If using external data, document the source in a comment.
 
 ```{r your_map, echo=TRUE, message=TRUE}
-my_dem <- rast("neoh_dem.tif")
-my_places <- st_read("oh_places.gpkg") %>%
-    st_transform(crs(my_dem))
+library(terra)
+dem <- rast("neoh_dem.tif")
+file.exists("neoh_dem.tif")
+places <- st_read("oh_places.gpkg")
 
-my_dem
-my_places
-oh_counties_joined
+dem
+places
 
-tus_county <- oh_counties_joined %>% 
-    filter(NAME == "Tuscarawas") %>%
-    st_transform(crs(my_dem))
 
-tus_county
+dem_proj <- project(dem, crs(places))
 
-my_places_tus <- st_intersection(my_places, tus_county)
-my_dem_tus <- terra::crop(my_dem, vect(tus_county)) %>% terra::mask(vect(tus_county))
+slp <- terrain(dem_proj, "slope", unit = "radians")
+asp <- terrain(dem_proj, "aspect", unit = "radians")
+hill <- shade(slp, asp, angle = 45, direction = 315)
 
-final_map <- tm_shape(my_dem_tus) +
-  tm_raster(palette = "terrain", title = "Elevation", style = "cont")+
-  tm_shape(tus_county) +
-  tm_borders(col = "black", lwd = 2) +
-  tm_shape(my_places_tus) +
-  tm_polygons(col = "white", style = "quantile", palette = "Reds", title = "2020 Population", alpha = 0.8) +
-  tm_compass(position = c("right", "top")) +
-  tm_scalebar(position = c("left", "bottom")) +
+map_idea1 <- tm_shape(hill) +
+  tm_raster(palette = "-Greys", legend.show = FALSE, alpha = 0.7) + # Base hillshade
+  tm_shape(dem_proj) +
+  tm_raster(palette = "terrain", alpha = 0.5, title = "Elevation (m)") + # Color elevation
+  tm_shape(places) +
+  tm_borders(col = "black", lwd = 1.5, lty = "dashed") + # City limits
+  # tm_shape(roads) + tm_lines(col = "red", lwd = 1) + # Add roads if available
   tm_layout(
-    main.title = "Tuscarawas County: Population Density over Elevation",
-    bg.color = "white",
-    legend.outside = TRUE
-  )
+    title = "Topography and Urban Boundaries in Northeast Ohio",
+    title.position = c("left", "top"),
+    legend.position = c("right", "bottom"),
+    frame = TRUE
+  ) +
+  tm_compass(position = c("left", "bottom")) +
+  tm_scalebar(position = c("left", "bottom"))
 
-final_map
-
-
+map_idea1
 
 ```
 
