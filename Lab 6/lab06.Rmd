@@ -1,0 +1,406 @@
+---
+title: "Lab 06"
+#author: "Dr. Patrick Bitterman"
+#date: "`r format(Sys.time(), '%Y %B %d')`"
+output: html_document
+my_subtitle: "Env Analysis in R"
+geometry: margin=1in
+---
+
+# Lab 06: Dynamic mapping with Leaflet
+
+### Read the instructions COMPLETELY before starting the lab
+
+This lab builds directly on labs 2–4 and the in-class Leaflet exercises. You will need those lab files available for reference.
+
+### Formatting your submission
+
+This lab must be placed into a public repository on GitHub (www.github.com). Before the due date, submit **on Canvas** a link to the repository. I will then download your repositories and run your code. The code must be contained in either a .R script or a .Rmd markdown document. As I need to run your code, any data you use in the lab must be referenced using **relative path names**. Finally, answers to questions I pose in this document must also be in the repository at the time you submit your link to Canvas. They can be in a separate text file, or if you decide to use an RMarkdown document, you can answer them directly in the doc.
+
+*Note: This lab is output as an HTML document — not a PDF. Leaflet maps are **interactive** and cannot be embedded in a static PDF. Your knitted output will be an `.html` file. Keep this in mind when organizing your submission.*
+
+## Introduction
+
+In the previous lab you built static maps using `tmap`. Static maps are excellent for print, publication, and controlled presentation. But many modern mapping applications demand **interactivity**: users want to pan, zoom, click, and toggle layers. Leaflet is the dominant open-source library for interactive web maps, and `leaflet` (the R package) wraps it for use in R.
+
+Leaflet's design philosophy is similar to `tmap` in that maps are built by **layering components**:
+
+```
+leaflet() %>%
+  addTiles() %>%                  # base map (tiles)
+  addPolygons(...) %>%            # vector layer
+  addLegend(...) %>%              # legend
+  addLayersControl(...)           # layer toggle
+```
+
+Each `add*()` call adds a new layer or control to the map object. The `%>%` pipe passes the map forward. This means you can build up a map incrementally, verify each piece, and compose them together — exactly as you did in `tmap`.
+
+Key resources:
+- Official leaflet for R docs: https://rstudio.github.io/leaflet/
+- Making maps with R (Hahn, Ch. 5): https://bookdown.org/nicohahn/making_maps_with_r5/docs/leaflet.html
+- `leaflet.providers` for basemap tile options
+
+```{r packages, echo=TRUE, message=TRUE}
+library(sf)
+library(leaflet)
+library(tidyverse)
+library(spdep)   # needed for Task 2 (Moran/LISA)
+```
+
+*Note: You may need additional packages depending on your Task 3 choices. Load them here.*
+
+---
+
+## Task 1: Choropleth from Lab 2
+
+*Reference: leaflet docs — `addPolygons()`, `colorBin()`, `addLegend()`*
+
+In Lab 2, Task 2.3, you created a choropleth of Chesapeake Bay Watershed counties shaded by the total cost of BMPs funded/implemented in each county. Here you will recreate that map in Leaflet.
+
+### 1.1 — Reload and prepare the data
+
+Go back to your Lab 2 code and reload the county geometry and BMP cost data. Perform whatever join and preprocessing was necessary to produce your choropleth variable. Store the result as an `sf` object called `counties_bmp`.
+
+Before mapping, **check and set the CRS**. Leaflet requires geographic coordinates (WGS 84, EPSG 4326). If your data are in a projected CRS, reproject now using `sf::st_transform(counties_bmp, 4326)`.
+
+```{r task1_data, echo=TRUE, message=TRUE}
+counties <- st_read("County_Boundaries.shp")
+glimpse(counties)
+bmps<-read_csv("./BMPreport2016_landbmps.csv")
+glimpse(bmps)
+
+library(tmap)
+geography <-bmps %>% 
+  separate(col=Geography, into=c("countynames","other data"), sep = ",")
+glimpse(geography)
+geography$countynames
+
+names <- geography %>%
+  group_by(countynames) %>%
+  summarise(costpercounty=sum(Cost, na.rm=T))
+
+counties_bmp <- left_join(counties,names, by=c("NAME10"="countynames"))
+
+counties_bmp %>% tm_shape() + tm_polygons(fill="costpercounty")
+
+glimpse(counties_bmp)
+
+
+counties_bmp <- st_transform(counties_bmp, 4326)
+
+```
+
+### 1.2 — Define a color palette
+
+Leaflet's `colorBin()` function creates a color palette from a set of breaks. You must determine the **equal-interval breaks programmatically** — do not hard-code them.
+
+*Hint: The range of the variable divided by the number of classes gives you the interval width. `seq()` can generate your break points.*
+
+```{r task1_palette, echo=TRUE, message=TRUE}
+
+n_classes<-6
+
+min_cost <- min(counties_bmp$costpercounty, na.rm = TRUE)
+glimpse(min_cost)
+max_cost <- max(counties_bmp$costpercounty, na.rm = TRUE)
+glimpse(max_cost)
+
+breaks <- seq(min_cost, max_cost, length.out = 6)
+
+
+color_palette<- colorBin(
+  palette="Yl0rRd",
+  domain=counties_bmp$min_cost,
+  bin=breaks
+)
+```
+
+*Requirement: Do NOT use the default color scheme (Blues). Choose a palette appropriate for sequential data from a source like ColorBrewer.*
+
+### 1.3 — Build the choropleth map
+
+Build the Leaflet map with the following requirements:
+
+- The county polygons colored by total BMP cost using your `colorBin()` palette
+- A **mouse-over label** that displays the county name and total cost when the cursor hovers over a county. Use the `label` argument in `addPolygons()`.
+- A **legend** using `addLegend()`
+- A basemap tile layer using `addProviderTiles()` — choose something other than the default OpenStreetMap. Browse options at https://leaflet-extras.github.io/leaflet-providers/preview/
+
+```{r task1_map, echo=TRUE, message=TRUE}
+glimpse(counties_bmp)
+
+map_task1 <- leaflet(counties_bmp) %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addPolygons(
+    fillColor = ~color_palette(costpercounty),
+    fillOpacity = 0.8,
+    color = "lavender",
+    weight = 1, 
+    label = ~paste0(NAME10, ": $", formatC(costpercounty, format="f", big.mark=",", digits=2)),
+    highlightOptions = highlightOptions(weight = 3, color = "lavender", bringToFront = TRUE)
+  ) %>%
+  addLegend(
+    position = "bottomright",
+    pal = color_palette,
+    values = ~costpercounty,
+    title = "Total BMP Cost ($)",
+    opacity = 0.8
+  )
+
+map_task1
+```
+
+**Reflection question 1 (answer in your repo):** In `tmap`, classification method choices (jenks, quantile, etc.) are made when you call `tm_polygons()`. In Leaflet, you define the palette and breaks separately using `colorBin()`, `colorQuantile()`, or `colorNumeric()`. What are the trade-offs of this approach? Does separating the palette from the geometry layer give you more or less flexibility? Give a specific example.
+
+---
+
+## Task 2: LISA map from Lab 3
+
+*Reference: leaflet docs — `addPolygons()` popup, `addLayersControl()`, `addProviderTiles()`*
+
+In Lab 3, Bonus Task 2, you produced a choropleth map of LISA (local Moran's I) quadrants — a categorical four-class map showing spatial clustering patterns (HH, HL, LH, LL). Here you will recreate that map in Leaflet with interactive enhancements.
+
+### 2.1 — Reload and prepare the data
+
+Go back to your Lab 3 code. Reload the spatial data and rerun the Moran/LISA analysis to recover the quadrant assignments and p-values. Store the result as an `sf` object called `counties_lisa`, reprojected to WGS 84 (EPSG 4326).
+
+*Note: You need both the quadrant labels and the p-values — make sure both are columns in `counties_lisa` before proceeding.*
+
+```{r task2_data, echo=TRUE, message=TRUE}
+
+library(tidycensus)
+library(tidyverse)
+install.packages("spdep")
+library(spdep)
+library(sf)
+library(tmap)
+options(tigris_use_cache=TRUE)
+d.all<-get_acs(geography="county",
+               table="B15003",
+               output="wide",
+               geometry=T,
+               year=2020)
+glimpse(d.all)
+
+df.vars<-load_variables(2020,"acs5",cache = T)
+glimpse(df.vars)
+
+d.sex.by.age<-get_acs(geography="county",
+                      table="B01001",
+                      output="wide",
+                      geometry=T,
+                      year=2020)
+
+glimpse(d.sex.by.age)
+
+ohio<-d.sex.by.age %>%
+  mutate(.,STATEID=stringr::str_sub(GEOID,1,2)) %>%
+  dplyr::filter(STATEID=="39")
+
+tmap::tm_shape(ohio)+tm_polygons()
+
+sf::st_crs(ohio)
+
+ohio.projected<-ohio%>%sf::st_transform(.,"ESRI:102010")
+tmap::tm_shape(ohio.projected)+tm_polygons()
+nb<-spdep::poly2nb(ohio.projected,queen=TRUE)
+
+nb
+nb[[1]]
+
+ohio.projected$NAME[1]
+nb[[1]]%>%ohio.projected$NAME[.]
+
+lw<-spdep::nb2listw(nb, style="W",zero.policy=TRUE)
+
+lw$weights[1]
+
+neighbors<-attr(lw$weights,"comp")$d
+hist(neighbors)
+
+F75.lag<-lag.listw(lw,ohio.projected$B01001_047E)
+F75.lag
+moran.test(ohio.projected$B01001_047E,lw)
+moran.plot(ohio.projected$B01001_047E,lw,zero.policy=TRUE,plot=TRUE)
+
+#starting lab 3 work ----
+
+fivestates <- c("Ohio", "Pennsylvania", "West Virginia", 
+                     "Indiana", "Michigan") #1, using 5 states ----
+fiveSS <- us_states %>%
+  filter(NAME %in% fivestates) %>%
+  st_transform(crs = 5070)
+glimpse(fiveSS)
+
+
+fiveSS <- fiveSS %>% #2, total population variable ----
+  mutate(
+    area_sqkm = as.numeric(st_area(.)) / 1e6, 
+    pop_density = total_pop_15 / area_sqkm
+  )
+glimpse(fiveSS)
+
+hist(fiveSS$pop_density, #3, histogram of population density ----
+     main = "Histogram of population density",
+     xlab = "population density (people per km^2)",
+     col = "lightgreen")
+    
+
+tm_shape(fiveSS) +    #4, chloropleth make of population density ----
+  tm_polygons(col = "pop_density",
+              title = "population density (per km^2)",
+              palette = "Greens") +
+  tm_layout(main.title = "Choropleth map of population density")
+
+
+queen <- poly2nb(fiveSS, queen = TRUE) #picking queen for question 5 ----
+
+
+queenlistw <- nb2listw(queen, style = "W", zero.policy = TRUE) #5.1 row standardize the W ----
+
+
+numneighbors <- card(queen) #5.2 plot a histogram of number of neighbors ----
+hist(numneighbors,
+     main = "Number of neighbors (using queen)",
+     xlab = "Number of neighbors",
+     col = "darkgreen")
+
+
+averageneighbors <- mean(numneighbors) #5.3 average number of neighbors ----
+cat("Average number of neighbors (Queen):", round(avgerageneighbors, 2), "\n")
+glimpse(averageneighbors)
+
+moran.plot(fiveSS$pop_density, #5.4 make a moran plot ----
+           listw = queenlistw,
+           main = "Moran plot using queen",
+           xlab = "Population density",
+           ylab = "Spatial lag population density")
+
+
+coordinates <- st_coordinates(st_centroid(st_geometry(fiveSS)))
+
+nearestn2 <- knn2nb(knearneigh(coordinates, k = 1))
+dist <- max(unlist(nbdists(nearestn2, coordinates)))
+dist2 <- dnearneigh(coordinates, d1 = 0, d2 = dist * 1.5)
+glimpse(dist2)
+dists3 <- nbdists(dist2, coordinates)
+idw_weights <- lapply(dists3, function(x) 1 / x)
+glimpse(idw_weights)
+
+
+WS_idw <- nb2listw(dist2, glist = idw_weights, style = "W", zero.policy = TRUE) #6.1 standardizing the  W using idw ---- 
+
+
+number_neighbors_idw <- card(dist2) #6.2 making histogram of number of neighboors using IDW ----
+hist(num_neighbors_idw,
+     main = "Histogram of number of neighbors based on distance",
+     xlab = "Number of neighbors",
+     col = "limegreen")
+
+
+average_neighbors_idw <- mean(number_neighbors_idw) #6.3 average number of neighbors using IDW ----
+cat("Average number of neighbors using IDW:", round(average_neighbors_idw, 2), "\n")
+
+moran.plot(fiveSS$pop_density, #6.4 make a moran plot using IDW ----
+           listw = WS_idw,
+           main = "Moran plot using IDW",
+           xlab = "Population pensity",
+           ylab = "Spatial lag population density")
+
+
+```
+
+### 2.2 — Define a categorical color palette
+
+LISA quadrants are a categorical variable (four classes). Use `colorFactor()` instead of `colorBin()`. Assign a distinct, meaningful color to each quadrant (HH, HL, LH, LL). A common convention is warm colors for High clusters and cool colors for Low clusters.
+
+```{r task2_palette, echo=TRUE, message=TRUE}
+# your code here
+# example structure:
+# pal_lisa <- colorFactor(palette = c(...), levels = c("HH", "HL", "LH", "LL"))
+```
+
+### 2.3 — Build the LISA map
+
+Build the Leaflet map with the following requirements:
+
+- County polygons colored by LISA quadrant using your `colorFactor()` palette
+- A **pop-up window** (not a hover label) that displays the p-value for that county when clicked. Use the `popup` argument in `addPolygons()`. Format the p-value to a reasonable number of decimal places.
+- A **basemap switcher** that allows the user to toggle between **3 different basemaps**. Use `addProviderTiles()` with `group` arguments and `addLayersControl()` with `baseGroups`.
+- A legend
+
+```{r task2_map, echo=TRUE, message=TRUE}
+# your code here
+```
+
+*Tip: The `addLayersControl()` function accepts `baseGroups` (radio buttons, one active at a time) and `overlayGroups` (checkboxes, multiple can be active). Basemaps should be `baseGroups`.*
+
+**Reflection question 2 (answer in your repo):** Compare the static LISA map you made in Lab 3 to this interactive version. What does interactivity add? Are there things the static map communicates more clearly? Consider map reading purpose (exploration vs. communication) in your answer.
+
+---
+
+## Task 3: Free-form map from Lab 4
+
+*Reference: leaflet docs — `addLayersControl()` with overlayGroups, your choice of other features*
+
+In Lab 5, Task 5, you created an original map combining vector and raster data, representing both a social and an environmental process. Here you will recreate that concept in Leaflet.
+
+*Note: Leaflet handles raster data differently than `tmap`. The `addRasterImage()` function in the `leaflet` package can display projected rasters, but requires the `raster` package (not `terra`) or conversion. An alternative is to represent the "environmental process" through a different vector layer (e.g., watersheds, land cover categories as polygons) if raster integration proves difficult. Document your approach in a comment.*
+
+### 3.1 — Reload and prepare your data
+
+Reload the data you used in your original free-form map. Reproject all layers to WGS 84 (EPSG 4326). List the layers you are using in a comment.
+
+```{r task3_data, echo=TRUE, message=TRUE}
+# your code here
+# layers I'm using:
+#  - [social layer]: ...
+#  - [environmental layer]: ...
+```
+
+### 3.2 — Build the interactive map
+
+Build the Leaflet map with the following requirements:
+
+- At least **two distinct data layers** (one social, one environmental)
+- A **layer toggle control** (`addLayersControl()` with `overlayGroups`) that lets the user turn each layer on or off independently
+- At least **one additional interactive feature** of your choosing that is meaningful for YOUR specific map. Options include (but are not limited to):
+  - Popups with attribute data
+  - Hover labels
+  - A minimap (`addMiniMap()` from `leaflet.extras`)
+  - Marker clustering
+  - A scale bar (`addScaleBar()`)
+  - Highlighting on hover (`highlight` argument in `addPolygons()`)
+- A legend for at least one layer
+
+Document your "one thing" choice in a comment explaining what it is and why it fits your map.
+
+```{r task3_map, echo=TRUE, message=TRUE}
+# your code here
+
+# My "one thing": [describe what you added and why it's applicable]
+```
+
+**Reflection question 3 (answer in your repo):** Describe the one extra feature you added and justify why it is meaningful for your specific map — not just technically interesting, but cartographically or analytically useful for the story you are trying to tell.
+
+---
+
+## Questions
+
+1. Reflect on the labs from this semester. What did you learn? What did you like? What did you not like? (Be specific — vague answers will receive partial credit.)
+
+2. In this lab, all three tasks involved taking existing analysis and presenting it interactively. What does Leaflet add beyond what `tmap` could do? And conversely, what did you give up by switching to Leaflet? Consider both technical and cartographic dimensions.
+
+3. Describe the "one thing" you chose to add to your map in Task 3. What did you implement, why is it applicable to your specific map, and how does it change the user's experience compared to a static version?
+
+---
+
+## Bonus (+20 points)
+
+Extend your Task 2 LISA map to include a **synchronized side-by-side view**: the LISA quadrant map on one side and the underlying variable choropleth (from Task 1 or your Lab 3 variable) on the other. The `leafsync` package provides `sync()` for this purpose.
+
+The two maps should share the same extent and zoom level. When you pan or zoom one, the other follows. Add a brief comment explaining what analytical value this comparison provides.
+
+```{r bonus, echo=TRUE, message=TRUE}
+# your code here
+```
