@@ -292,31 +292,56 @@ library(grid)
 oh_counties <- st_read("oh_counties.gpkg")
 oh_census <- read_csv("oh_counties_DP2020.csv")
 
-
+glimpse(oh_census)
+glimpse(oh_counties)
 oh_census <- oh_census %>%
   mutate(geoid = str_sub(as.character(geoid), -5))
 
 glimpse(oh_counties)
 oh_counties <- oh_counties %>%
-  mutate(geoid=as.character(GEOID))
+  mutate(geoid=as.character(GEOID)) 
+
+
+newdf<-oh_counties_joined %>% mutate(popdens=(poptotal)/(ALAND))
+glimpse(newdf)
 
 oh_counties_joined <- oh_counties %>%
-  left_join(oh_census, by = "geoid")
+  left_join(oh_census, by = "geoid") 
+  
 
 nrow(oh_counties_joined)
 glimpse(oh_counties_joined)
 
-map_ohio <- tm_shape(oh_counties_joined) +
-  tm_polygons(
-    col = "female_age", 
-    style = "jenks",        
-    n = 5,                  
-    palette = "Blues",
-    title = "Percentage of females ages 20-24 in the total population" 
-  ) +
-  tm_borders(col = "lavender", lwd = 1.2, lty = "solid") +
-  tm_scalebar(position = c("left", "top")) +
-  tm_layout(frame = FALSE)
+
+```{r}
+oh_counties_joined <- oh_counties_joined %>% sf::st_transform(., "EPSG:4326")
+
+m.both <- leaflet() %>%
+  addPolygons(data = oh_counties_joined, 
+  popup = ~paste0(name, ", " , poptotal),
+  label = ~poptotal)
+
+m.both
+```
+
+
+
+
+
+oh_counties_joined
+
+glimpse(popup_content)
+
+map_ohio <- leaflet(data = map_ohio) %>% setView(lng = -81.34, lat = 41.145, zoom = 10)
+mp %>% addTiles() %>% 
+  addPolygons(popup = ~NAME, label = ~NAME)
+
+
+
+map_ohio %>% addTiles() %>% 
+  addPolygons(popup = ~NAME, label = ~NAME)
+
+map_ohio
 
 #### Extra challenges: 
 1. Add a minimap to the interface
