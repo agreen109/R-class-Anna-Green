@@ -267,7 +267,7 @@ hist(numneighbors,
 
 
 averageneighbors <- mean(numneighbors) #5.3 average number of neighbors ----
-cat("Average number of neighbors (Queen):", round(avgerageneighbors, 2), "\n")
+cat("Average number of neighbors (Queen):", round(averageneighbors, 2), "\n")
 glimpse(averageneighbors)
 
 moran.plot(fiveSS$pop_density, #5.4 make a moran plot ----
@@ -292,7 +292,7 @@ WS_idw <- nb2listw(dist2, glist = idw_weights, style = "W", zero.policy = TRUE) 
 
 
 number_neighbors_idw <- card(dist2) #6.2 making histogram of number of neighboors using IDW ----
-hist(num_neighbors_idw,
+hist(number_neighbors_idw,
      main = "Histogram of number of neighbors based on distance",
      xlab = "Number of neighbors",
      col = "limegreen")
@@ -307,7 +307,70 @@ moran.plot(fiveSS$pop_density, #6.4 make a moran plot using IDW ----
            xlab = "Population pensity",
            ylab = "Spatial lag population density")
 
+#all of the above is lab three redownloaded, I did not do extra credit in lab three, so I thought having all infor from lab three would be helpful but might have been extra 
 
+
+
+mp_data <- moran.plot(ohio.projected$B01001_047E, lw, zero.policy = TRUE, plot = FALSE) #lab three extra credit question 1
+
+local_m <- localmoran(ohio.projected$B01001_047E, lw, zero.policy = TRUE)
+
+plot_df <- mp_data %>%
+  mutate(
+    p_val = local_m[, 5], 
+    is_sig = p_val <= 0.05,
+    quadrant = case_when(
+      x > 0 & wx > 0 ~ "HH",
+      x < 0 & wx < 0 ~ "LL",
+      x < 0 & wx > 0 ~ "LH",
+      x > 0 & wx < 0 ~ "HL",
+      TRUE ~ "None"
+    )
+  )
+
+ggplot(plot_df, aes(x = x, y = wx, color = quadrant, shape = is_sig)) +
+  geom_point(size = 2.5, alpha = 0.8) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray50") +
+  scale_color_manual(values = c("HH" = "red", "LL" = "blue", "HL" = "orange", "LH" = "lightblue")) +
+  labs(
+    title = "Local Indicators of Spatial Association (LISA) Moran Plot",
+    x = "Centered Variable",
+    y = "Spatially Lagged Centered Variable",
+    shape = "Significant (p <= 0.05)",
+    color = "Quadrant"
+  ) +
+  theme_minimal()
+
+ohio.projected <- ohio.projected %>% #Lab three extra credit question 2
+  mutate(
+    quadrant = plot_df$quadrant,
+    is_sig = plot_df$is_sig,
+    # Mask non-significant observations as "Not Significant"
+    lisa_cluster = if_else(is_sig, quadrant, "Not Significant")
+  )
+
+counties_lisa <- st_transform(ohio.projected, 4326)
+
+tm_shape(ohio.projected) +
+  tm_polygons(
+    col = "lisa_cluster",
+    style = "cat",
+    palette = c("HH" = "red", 
+                "LL" = "blue", 
+                "HL" = "orange", 
+                "LH" = "lightblue", 
+                "Not Significant" = "grey90"),
+    title = "LISA Clusters",
+    border.col = "white",
+    lwd = 0.5
+  ) +
+  tm_layout(
+    main.title = "LISA Clusters for Female Pop (75-79)",
+    main.title.size = 1.1,
+    legend.position = c("left", "bottom"),
+    frame = FALSE
+  )
 ```
 
 ### 2.2 — Define a categorical color palette
@@ -315,9 +378,10 @@ moran.plot(fiveSS$pop_density, #6.4 make a moran plot using IDW ----
 LISA quadrants are a categorical variable (four classes). Use `colorFactor()` instead of `colorBin()`. Assign a distinct, meaningful color to each quadrant (HH, HL, LH, LL). A common convention is warm colors for High clusters and cool colors for Low clusters.
 
 ```{r task2_palette, echo=TRUE, message=TRUE}
-# your code here
-# example structure:
-# pal_lisa <- colorFactor(palette = c(...), levels = c("HH", "HL", "LH", "LL"))
+pal_lisa <- colorFactor(
+  palette = c("#d7191c", "#fdae61", "#abd9e9", "#2c7bb6"), # Warm for High, Cool for Low
+  levels = c("HH", "HL", "LH", "LL")
+)
 ```
 
 ### 2.3 — Build the LISA map
@@ -330,7 +394,34 @@ Build the Leaflet map with the following requirements:
 - A legend
 
 ```{r task2_map, echo=TRUE, message=TRUE}
-# your code here
+counties_lisa
+glimpse(counties_lisa)
+
+map_task2 <- leaflet(counties_lisa) %>%
+  addProviderTiles(providers$CartoDB.Positron, group = "CartoDB Light") %>%
+  addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>%
+  addProviderTiles(providers$OpenStreetMap, group = "OSM Default") %>%
+  addPolygons(
+    fillColor = ~pal_lisa(quadrant),
+    fillOpacity = 0.7,
+    color = "white",
+    weight = 1,
+    popup = ~paste0("<strong>County:</strong> ", NAME, 
+                    "<br><strong>Quadrant:</strong> ", quadrant)) %>%
+                    #"<br><strong>p-value:</strong> ", round(p_value, 4))) %>% I dont know how to fix this, will need to ask in class
+  addLayersControl(
+    baseGroups = c("CartoDB Light", "Satellite", "OSM Default"),
+    options = layersControlOptions(collapsed = FALSE)
+  ) %>%
+  addLegend(
+    position = "bottomleft",
+    pal = pal_lisa,
+    values = ~quadrant,
+    title = "LISA Quadrants",
+    opacity = 0.8
+  )
+
+map_task2
 ```
 
 *Tip: The `addLayersControl()` function accepts `baseGroups` (radio buttons, one active at a time) and `overlayGroups` (checkboxes, multiple can be active). Basemaps should be `baseGroups`.*
