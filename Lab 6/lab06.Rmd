@@ -307,7 +307,7 @@ moran.plot(fiveSS$pop_density, #6.4 make a moran plot using IDW ----
            xlab = "Population pensity",
            ylab = "Spatial lag population density")
 
-#all of the above is lab three redownloaded, I did not do extra credit in lab three, so I thought having all infor from lab three would be helpful but might have been extra 
+#all of the above is lab three redownloaded, I did not do extra credit in lab three, so I thought having all info from lab three would be helpful but might have been extra 
 
 
 
@@ -398,9 +398,9 @@ counties_lisa
 glimpse(counties_lisa)
 
 map_task2 <- leaflet(counties_lisa) %>%
-  addProviderTiles(providers$CartoDB.Positron, group = "CartoDB Light") %>%
-  addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>%
-  addProviderTiles(providers$OpenStreetMap, group = "OSM Default") %>%
+  addProviderTiles(providers$CartoDB.Positron, group = "CartoDB.Positron") %>%
+  addProviderTiles(providers$Esri.WorldImagery, group = "Esri.WorldImagery") %>%
+  addProviderTiles(providers$OpenStreetMap, group = "OpenStreetMap") %>%
   addPolygons(
     fillColor = ~pal_lisa(quadrant),
     fillOpacity = 0.7,
