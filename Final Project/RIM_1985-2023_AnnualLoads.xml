@@ -1,0 +1,315 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<metadata>
+  <idinfo>
+    <citation>
+      <citeinfo>
+        <origin>Christopher A. Mason</origin>
+        <origin>Alexander M. Soroka</origin>
+        <pubdate>20240530</pubdate>
+        <title>Chesapeake Bay River Input Monitoring Network 1985-2023: Annual loads</title>
+        <geoform>Data table</geoform>
+        <pubinfo>
+          <pubplace>Richmond, VA</pubplace>
+          <publish>U.S. Geological Survey - ScienceBase</publish>
+        </pubinfo>
+        <onlink>https://doi.org/10.5066/P13QLXFP</onlink>
+      </citeinfo>
+    </citation>
+    <descript>
+      <abstract>Nitrogen, phosphorus, and suspended-sediment loads, and changes in loads, in major rivers across the Chesapeake Bay watershed have been calculated using monitoring data from the Chesapeake Bay River Input Monitoring (RIM) Network stations for the period 1985 through 2023. Nutrient and suspended-sediment loads and changes in loads were determined by applying a weighted regression approach called WRTDS (Weighted Regression on Time, Discharge, and Season). The load results represent the total mass of nitrogen, phosphorus, and suspended sediment that was exported from each of the RIM watersheds.</abstract>
+      <purpose>The purpose of this dataset is to communicate the annual loads of nitrogen, phosphorus, and suspended sediment being transported by the nontidal portion of the major rivers in the Bay watershed.</purpose>
+    </descript>
+    <timeperd>
+      <timeinfo>
+        <rngdates>
+          <begdate>19841001</begdate>
+          <enddate>20230930</enddate>
+        </rngdates>
+      </timeinfo>
+      <current>ground condition</current>
+    </timeperd>
+    <status>
+      <progress>Complete</progress>
+      <update>Irregular</update>
+    </status>
+    <spdom>
+      <bounding>
+        <westbc>-79.167480469182</westbc>
+        <eastbc>-74.904785156852</eastbc>
+        <northbc>42.714410712674</northbc>
+        <southbc>36.208470061656</southbc>
+      </bounding>
+    </spdom>
+    <keywords>
+      <theme>
+        <themekt>none</themekt>
+        <themekey>water quality</themekey>
+        <themekey>nutrients</themekey>
+        <themekey>nitrogen</themekey>
+        <themekey>phosphorus</themekey>
+        <themekey>suspended sediment</themekey>
+        <themekey>load analysis</themekey>
+        <themekey>Kalman filtering</themekey>
+        <themekey>WRTDS-Kalman</themekey>
+        <themekey>WRTDS</themekey>
+        <themekey>trends</themekey>
+        <themekey>rivers</themekey>
+        <themekey>weighted regression</themekey>
+      </theme>
+      <theme>
+        <themekt>USGS Metadata Identifier</themekt>
+        <themekey>USGS:66310c72d34ea70bd5f265b7</themekey>
+      </theme>
+      <place>
+        <placekt>none</placekt>
+        <placekey>Chesapeake Bay Watershed</placekey>
+        <placekey>United States</placekey>
+        <placekey>New York</placekey>
+        <placekey>Pennsylvania</placekey>
+        <placekey>Maryland</placekey>
+        <placekey>Delaware</placekey>
+        <placekey>West Virginia</placekey>
+        <placekey>Virginia</placekey>
+        <placekey>Washington DC</placekey>
+      </place>
+    </keywords>
+    <accconst>none</accconst>
+    <useconst>none</useconst>
+    <ptcontac>
+      <cntinfo>
+        <cntperp>
+          <cntper>Christopher A. Mason</cntper>
+          <cntorg>USGS Virginia and West Virginia Water Science Center</cntorg>
+        </cntperp>
+        <cntaddr>
+          <addrtype>mailing and physical</addrtype>
+          <address>1730 E. Parham Road</address>
+          <city>Richmond</city>
+          <state>Virginia</state>
+          <postal>23228</postal>
+          <country>USA</country>
+        </cntaddr>
+        <cntvoice>804-261-2613</cntvoice>
+        <cntemail>camason@usgs.gov</cntemail>
+      </cntinfo>
+    </ptcontac>
+    <datacred>This annual update of nitrogen, phosphorus, and suspended-sediment loads and trends is performed in cooperation with Maryland Department of Natural Resources, Virginia Department of Environmental Quality, and Environmental Protection Agency Chesapeake Bay Program Office.</datacred>
+  </idinfo>
+  <dataqual>
+    <attracc>
+      <attraccr>No formal attribute accuracy tests were conducted</attraccr>
+    </attracc>
+    <logic>No formal logical accuracy tests were conducted</logic>
+    <complete>Data set is considered complete for the information presented, as described in the abstract. Users are advised to read the rest of the metadata record carefully for additional details.</complete>
+    <posacc>
+      <horizpa>
+        <horizpar>No formal positional accuracy tests were conducted</horizpar>
+      </horizpa>
+      <vertacc>
+        <vertaccr>No formal positional accuracy tests were conducted</vertaccr>
+      </vertacc>
+    </posacc>
+    <lineage>
+      <procstep>
+        <procdesc>Methods:
+KConc (Kalman concentration) and KLoad (Kalman load/flux) were computed using the residual errors gained from the daily WRTDS with Kalman filtering (WRTDS-K) models from days with an observed sample concentration at each RIM monitoring location. The model residuals are standardized, for each observed sample day, and are then simulated via Monte Carlo resamplings for the nonoverlapping gap interval days (before and after the days with observed sample measurements) with a lag-1 auto-correlation regression. Unlike regular WRTDS, WRTDS-K stores the true sampled measurements as part of its estimation output.
+
+FNConc (flow-normalized concentration) and FNLoad (flow-normalized load/flux) were computed by estimating an expected concentration for each day of the record by using the observed daily discharge for that day. Each day in the record (for example January 1, 1985, January 1, 1986... January 1, 2022) is binned into a three dimensional matrix of regression results and the estimate for that day is determined using linear interpolation of all the results stored in the matrix. By using each site's entire history of discharge, the loads are normalized to remove year-to-year variability from input sources or management practices. WRTDS stores a modeled measurement for every day as part of its estimation output (no sampled measurement values are retained like with WRTDS-K).
+
+The application of WRTDS-K to generate the loads provided in this table is documented in Zhang and Hirsch (2019). The application of WRTDS to generate the flow-normalized loads provided in this table is documented in Hirsch and others (2010) and in Chanat and others (2016). WRTDS and WRTDS-K are available in the R (version 4.3.1) software package EGRET - Exploration and Graphics for RivEr Trends (version 3.0.9; Hirsch and DeCicco, 2015).
+
+USGS station and parameter code information can be viewed at waterdata.usgs.gov/nwis and nwis.waterdata.usgs.gov/usa/nwis/pmcodes, respectively.
+
+References Cited:
+Zhang, Q. and Hirsch, R. M., 2019, River water-quality concentration and flux estimation can be improved by accounting for serial correlation through an autoregressive model: Water Resources Research, 55, 9705– 9723. doi.org/10.1029/2019WR025338.
+Hirsch, R.M., Moyer, D.L., and Archfield, S.A., 2010, Weighted regressions on time, discharge, and season (WRTDS), with an application to Chesapeake Bay river inputs: Journal of the American Water Resources Research Association, v. 46, no. 5, p. 857-880  
+Chanat, J.G., Moyer, D.L., Blomquist, J.D., Hyer, K.E., and Langland, M.J., 2016, Application of a weighted regression model for reporting nutrient and sediment concentrations, fluxes, and trends in concentration and flux for the Chesapeake Bay Nontidal Water-Quality Monitoring Network, results through water year 2012: U.S. Geological Survey Scientific Investigations Report 2015-5133, 139 p. http://dx.doi.org/10.3133/sir20155133
+Hirsch, R.M. and De Cicco, Laura, 2015, User guide to Exploration and Graphics for RivEr Trends (EGRET) and dataRetrieval: R packages for hydrologic data (version 2.0, February 2015): U.S. Geological Survey Techniques and Methods book 4, chap. A10, 93 p., http://dx.doi.org/10.3133/tm4A10.(accessed May 24, 2016)</procdesc>
+        <procdate>20240501</procdate>
+      </procstep>
+    </lineage>
+  </dataqual>
+  <eainfo>
+    <detailed>
+      <enttyp>
+        <enttypl>RIM_2023_AnnualLoadTable.csv</enttypl>
+        <enttypd>Annual nitrogen, phosphorus, and suspended-sediment load results for the nontidal portion of the nine major rivers in the Chesapeake Bay watershed</enttypd>
+        <enttypds>Christopher A. Mason, USGS Virginia Water Science Center</enttypds>
+      </enttyp>
+      <attr>
+        <attrlabl>STAID</attrlabl>
+        <attrdef>USGS Station ID - where: 
+"01491000 - CHOPTANK RIVER NEAR GREENSBORO, MD" 
+"01578310 - SUSQUEHANNA RIVER AT CONOWINGO, MD"
+"01594440 - PATUXENT RIVER NEAR BOWIE, MD" 
+"01646580 - POTOMAC RIVER AT CHAIN BRIDGE, AT WASHINGTON, D.C."
+"01668000 - RAPPAHANNOCK RIVER NEAR FREDERICKSBURG, VA"
+"01673000 - PAMUNKEY RIVER NEAR HANOVER, VA" 
+"01674500 - MATTAPONI RIVER NEAR BEULAHVILLE, VA" 
+"02035000 - JAMES RIVER AT CARTERSVILLE, VA" 
+"02041650 - APPOMATTOX RIVER AT MATOACA, VA"</attrdef>
+        <attrdefs>USGS Standard Gaging Station Number</attrdefs>
+        <attrdomv>
+          <udom>USGS Standard Gaging Station Number</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>STNAM</attrlabl>
+        <attrdef>USGS Station Name - where: 
+"01491000 - CHOPTANK RIVER NEAR GREENSBORO, MD" 
+"01578310 - SUSQUEHANNA RIVER AT CONOWINGO, MD"
+"01594440 - PATUXENT RIVER NEAR BOWIE, MD" 
+"01646580 - POTOMAC RIVER AT CHAIN BRIDGE, AT WASHINGTON, D.C."
+"01668000 - RAPPAHANNOCK RIVER NEAR FREDERICKSBURG, VA"
+"01673000 - PAMUNKEY RIVER NEAR HANOVER, VA" 
+"01674500 - MATTAPONI RIVER NEAR BEULAHVILLE, VA" 
+"02035000 - JAMES RIVER AT CARTERSVILLE, VA" 
+"02041650 - APPOMATTOX RIVER AT MATOACA, VA"</attrdef>
+        <attrdefs>USGS Gaging Station Name</attrdefs>
+        <attrdomv>
+          <udom>USGS Gaging Station Name</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>PCODE</attrlabl>
+        <attrdef>Parameter Code where: 
+P00600 = Total nitrogen (as N) 
+P00631 = Nitrate (as N) 
+P00665 = Total phosphorus (as P) 
+P00671 = Orthophosphorus (as P) 
+P80154 = Suspended sediment</attrdef>
+        <attrdefs>USGS Standard Constituent Parameter Code</attrdefs>
+        <attrdomv>
+          <udom>USGS Standard Constituent Parameter Code</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>Water Year</attrlabl>
+        <attrdef>October 1 - September 30</attrdef>
+        <attrdefs>Water year (October 1 - September 30)</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>1985</rdommin>
+            <rdommax>2023</rdommax>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>Q</attrlabl>
+        <attrdef>Mean annual flow for all days in specified water year in cubic feet per second (ft^3/s)</attrdef>
+        <attrdefs>U.S. Geological Survey</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>43.8</rdommin>
+            <rdommax>66,557.1</rdommax>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>KConc</attrlabl>
+        <attrdef>Mean annual concentration for all the days in specified water year in milligrams per liter (mg/L)</attrdef>
+        <attrdefs>Producer Defined</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0.005</rdommin>
+            <rdommax>68.25</rdommax>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>KLoad</attrlabl>
+        <attrdef>Annual load for all days in specified water year in pounds per year (lbs/yr)</attrdef>
+        <attrdefs>Producer Defined</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>1,550</rdommin>
+            <rdommax>34,300,000,000</rdommax>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>FNConc</attrlabl>
+        <attrdef>Flow normalized mean annual concentration for all the days in specified water year in mg/L</attrdef>
+        <attrdefs>Producer Defined</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>0.007</rdommin>
+            <rdommax>69.47</rdommax>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>FNLoad</attrlabl>
+        <attrdef>Flow normalized annual load for all days in specified water year in lbs/yr</attrdef>
+        <attrdefs>Producer Defined</attrdefs>
+        <attrdomv>
+          <rdom>
+            <rdommin>5,810</rdommin>
+            <rdommax>5,070,000,000</rdommax>
+          </rdom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>START_YR</attrlabl>
+        <attrdef>First water year of modeling period used to estimate load</attrdef>
+        <attrdefs>Producer Defined</attrdefs>
+        <attrdomv>
+          <udom>START_YR = 1985</udom>
+        </attrdomv>
+      </attr>
+      <attr>
+        <attrlabl>END_YR</attrlabl>
+        <attrdef>Last water year of modeling period used to estimate load</attrdef>
+        <attrdefs>Producer Defined</attrdefs>
+        <attrdomv>
+          <udom>END_YR = 2023</udom>
+        </attrdomv>
+      </attr>
+    </detailed>
+  </eainfo>
+  <distinfo>
+    <distrib>
+      <cntinfo>
+        <cntperp>
+          <cntper>U.S. Geological Survey - ScienceBase</cntper>
+          <cntorg>U.S. Geological Survey - ScienceBase</cntorg>
+        </cntperp>
+        <cntaddr>
+          <addrtype>mailing and physical</addrtype>
+          <address>Denver Federal Center, Building 810, Mail Stop 302</address>
+          <city>Denver</city>
+          <state>CO</state>
+          <postal>80225</postal>
+          <country>USA</country>
+        </cntaddr>
+        <cntvoice>1-888-275-8747</cntvoice>
+        <cntemail>sciencebase@usgs.gov</cntemail>
+      </cntinfo>
+    </distrib>
+    <distliab>Although these data have been processed successfully on a computer system at the U.S. Geological Survey (USGS), no warranty expressed or implied is made regarding the display or utility of the data on any other system or for general or scientific purposes, nor shall the act of distribution constitute any such warranty. The USGS or the U.S. Government shall not be held liable for improper or incorrect use of the data described and/or contained herein. Any use of trade, firm, or product names is for descriptive purposes only and does not imply endorsement by the U.S. Government.</distliab>
+  </distinfo>
+  <metainfo>
+    <metd>20240530</metd>
+    <metc>
+      <cntinfo>
+        <cntperp>
+          <cntper>Christopher A. Mason</cntper>
+          <cntorg>U.S. Geological Survey</cntorg>
+        </cntperp>
+        <cntpos>Physical Scientist</cntpos>
+        <cntaddr>
+          <addrtype>mailing and physical</addrtype>
+          <address>1730 East Parham Road</address>
+          <city>Richmond</city>
+          <state>VA</state>
+          <postal>23228</postal>
+          <country>USA</country>
+        </cntaddr>
+        <cntvoice>804-261-2613</cntvoice>
+        <cntemail>camason@usgs.gov</cntemail>
+      </cntinfo>
+    </metc>
+    <metstdn>Content Standard for Digital Geospatial Metadata</metstdn>
+    <metstdv>FGDC-STD-001-1998</metstdv>
+  </metainfo>
+</metadata>
