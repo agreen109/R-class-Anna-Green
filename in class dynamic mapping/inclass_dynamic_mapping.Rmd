@@ -315,33 +315,53 @@ glimpse(oh_counties_joined)
 
 ```{r}
 oh_counties_joined <- oh_counties_joined %>% sf::st_transform(., "EPSG:4326")
+glimpse(oh_counties_joined)
 
-m.both <- leaflet() %>%
-  addPolygons(data = oh_counties_joined, 
-  popup = ~paste0(name, ", " , poptotal),
-  label = ~poptotal)
+glimpse(oh_counties)
 
-m.both
+oh_counties_joined <- oh_counties_joined %>% 
+   mutate(popdensity = as.numeric(poptotal / ALAND))
+glimpse(oh_counties_joined)
+
+pal <- colorBin(
+  palette = "YlOrRd", 
+  domain = oh_counties_joined$popdensity, 
+  bins = 7)
+
+leaflet(data = oh_counties_joined) %>%
+  addProviderTiles(providers$CartoDB.Positron) %>% 
+  addPolygons(
+    fillColor = ~pal(popdensity),
+    color = "white",          
+    weight = 1,               
+    fillOpacity = 0.7,
+    label = ~paste0(NAME, " County, Population Density: ", popdensity),
+    highlightOptions = highlightOptions(
+      weight = 3,
+      color = "#666",
+      fillOpacity = 0.9,
+      bringToFront = TRUE)) %>%
+  addLegend(
+    position = "bottomright",
+    pal = pal,
+    values = ~popdensity,
+    title = "Population Density",
+    opacity = 0.7
+  ) %>% 
+  addMiniMap( #extra challenge one
+    tiles = providers$CartoDB.Positron,
+    toggleDisplay = TRUE,
+    position = "bottomleft"
+  ) %>%
+  addControlGPS( #extra challenge two
+    options = gpsOptions(position = "topleft", activate = TRUE, autoCenter = TRUE)
+  )
 ```
 
 
 
 
 
-oh_counties_joined
-
-glimpse(popup_content)
-
-map_ohio <- leaflet(data = map_ohio) %>% setView(lng = -81.34, lat = 41.145, zoom = 10)
-mp %>% addTiles() %>% 
-  addPolygons(popup = ~NAME, label = ~NAME)
-
-
-
-map_ohio %>% addTiles() %>% 
-  addPolygons(popup = ~NAME, label = ~NAME)
-
-map_ohio
 
 #### Extra challenges: 
 1. Add a minimap to the interface
