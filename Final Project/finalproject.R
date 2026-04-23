@@ -14,8 +14,7 @@ bay_states_map <- states_map %>%
   filter(region %in% c("virginia", "maryland", "pennsylvania", "delaware", "west virginia", "new york", "district of columbia"))
 
 static_map_maps <- ggplot() +
-  geom_polygon(data = bay_states_map, aes(x = long, y = lat, group = group), 
-               fill = "gray95", color = "gray50") +
+  geom_polygon(data = bay_states_map, aes(x = long, y = lat, group = group), fill = "gray95", color = "gray50") +
   geom_point(data = site_summaries, aes(x = Longitude, y = Latitude, size = Avg_KLoad, color = Avg_Q), alpha = 0.8) +
   scale_color_viridis_c(name = "Average Flow (Q)", option = "plasma") +
   scale_size_continuous(name = "Average Load") +
@@ -140,30 +139,28 @@ table_summary <- rim_data %>%
  ggplot(table_data, aes(x = Param_Name, y = Short_Name)) +
    geom_tile(aes(fill = KLoad), color = "white") +
    geom_text(aes(label = scales::comma(KLoad)), size = 3) +
-   scale_fill_gradient(low = "#e3f2fd", high = "#1565c0", name = "Annual Load") +
+   scale_fill_gradient(low = "lightblue", high = "deepskyblue3", name = "Annual Load") +
    scale_x_discrete(position = "top") +
    theme_minimal() +
    labs(
-     title = "2023 Annual Loads by Station and Pollutant",
-     subtitle = "Values represent KLoad (Total Annual Load)",
+     title = "2023 Annual Nutrient Loads by Station and Pollutant",
      x = "", y = ""
    ) +
    theme(
      axis.text.x = element_text(face = "bold"),
      panel.grid = element_blank(),
-     plot.title = element_text(hjust = 0.5, face = "bold"),
-     plot.subtitle = element_text(hjust = 0.5)
-   )
+     plot.title = element_text(hjust = 0.5, face = "bold"))
  
  
- #this is a great chart that represents nitrogen and phophorus load trends 
+ #this is a great chart that represents nitrogen and phophorus load trends in Susquehanna River 
  install.packages("scales")
  library(scales)
  
  rim_data <- read_csv("RIM_2023_AnnualLoadTable.csv")
+ print(rim_data)
  
  ts_data <- rim_data %>%
-   filter(STAID == "01578310") %>% # Susquehanna River at Conowingo, MD
+   filter(STAID == "01578310") %>% 
    filter(PCODE %in% c("P00600", "P00665")) %>%
    mutate(Parameter = ifelse(PCODE == "P00600", "Total Nitrogen", "Total Phosphorus"))
 
@@ -184,19 +181,18 @@ table_summary <- rim_data %>%
  
  #scatter plot with trend line of flow vs sediment load 
  scatter_data <- rim_data %>%
-   filter(PCODE == "P80154", `Water Year` >= 2010)
+   filter(PCODE == "P80154", `Water Year` >= 2023)
  
  ggplot(scatter_data, aes(x = Q, y = KLoad)) +
    geom_point(aes(color = STNAM), alpha = 0.6) +
-   geom_smooth(method = "lm", color = "black", linetype = "dashed") +
+   geom_smooth(method = "lm", color = "black", linetype = "solid") +
    scale_x_log10(labels = label_log()) +
    scale_y_log10(labels = label_log()) +
    theme_minimal() +
    labs(
      title = "Flow vs. Sediment Load (Log Scale)",
-     subtitle = "Evaluating the impact of discharge on sediment transport",
-     x = "Average Discharge ($Q$)",
-     y = "Annual Load ($KLoad$)"
+     x = "Average Discharge",
+     y = "Annual Nutrient Load"
    ) +
    theme(legend.position = "none")
  
