@@ -1,0 +1,201 @@
+---
+title: "re try lab 4"
+output: html_document
+date: "2026-04-26"
+---
+
+```{r setup, include=FALSE}
+raster_files <- fs::dir_ls("erie_raster_ex/images/", regexp = "\\.tif$")
+print(length(raster_files))
+
+
+single_raster <- terra::rast(raster_files[1])
+terra::crs(single_raster)
+terra::ext(single_raster)
+terra::res(single_raster)
+terra::nlyr(single_raster)
+terra::global(single_raster, c("min", "max"), na.rm = TRUE)
+
+
+clean_cicyano <- function(r) {
+  reclass_matrix <- matrix(c(0, 0, NA, 
+                             250, Inf, NA), 
+                           ncol = 3, byrow = TRUE)
+  raster_cleaned <- terra::classify(r, reclass_matrix, right = NA)
+  return(raster_cleaned)
+}
+
+
+test_clean <- clean_cicyano(single_raster)
+terra::global(single_raster, c("min", "max"), na.rm = TRUE)
+terra::global(test_clean, c("min", "max"), na.rm = TRUE)
+
+
+dn_to_ci <- function(r) {
+  ci_raster <- 10^((3.0 / 250.0) * r - 4.2)
+  return(ci_raster)
+}
+
+
+test_ci <- dn_to_ci(test_clean)
+terra::global(test_ci, c("min", "max"), na.rm = TRUE)
+```
+
+## R Markdown
+
+```{r}
+
+sandusky_bounds <- sf::read_sf("erie_raster_ex/bounds/bb_erie_sandusky.shp")
+
+
+if (sf::st_crs(sandusky_bounds) != terra::crs(single_raster)) {
+  sandusky_bounds <- sf::st_transform(sandusky_bounds, terra::crs(single_raster))
+}
+
+
+august_file <- stringr::str_subset(raster_files, "0816_0822")
+august_raw <- terra::rast(august_file)
+
+august_ci <- august_raw %>% 
+  clean_cicyano() %>% 
+  dn_to_ci()
+
+
+august_crop <- terra::crop(august_ci, sandusky_bounds)
+sandusky_0816 <- terra::mask(august_crop, sandusky_bounds)
+
+
+mean_full <- terra::global(august_ci, "mean", na.rm = TRUE)
+mean_sandusky <- terra::global(sandusky_0816, "mean", na.rm = TRUE)
+
+print(mean_full)
+print(mean_sandusky)
+
+
+tmap_mode("plot")
+tm_shape(sandusky_0816) +
+  tm_raster(palette = "YlGn", title = "CI Value") +
+  tm_shape(sandusky_bounds) +
+  tm_borders(col = "black") +
+  tm_layout(main.title = "Cyanobacteria Intensity: Sandusky Bay (Aug 16-22)",
+            legend.outside = TRUE) +
+  tm_scale_bar(position = c("left", "bottom"))
+```
+
+
+```{r}
+stacked_rasters <- raster_files[1:4] %>%
+  purrr::map(terra::rast) %>%
+  purrr::map(clean_cicyano) %>%
+  purrr::map(dn_to_ci) %>%
+  terra::rast() 
+
+
+means <- terra::global(stacked_rasters, "mean", na.rm = TRUE)
+
+
+dates <- stringr::str_extract(names(stacked_rasters), "\\d{4}_\\d{4}")
+
+temporal_df <- data.frame(
+  date = dates,
+  mean_ci = means$mean
+)
+print(temporal_df)
+
+
+ggplot(temporal_df, aes(x = date, y = mean_ci, group = 1)) +
+  geom_line(color = "steelblue", linewidth = 1) +
+  geom_point(color = "darkblue", size = 3) +
+  theme_minimal() +
+  labs(title = "Mean Cyanobacteria Intensity Over Time",
+       x = "Date Range",
+       y = "Mean CI")
+
+
+r_early <- stacked_rasters[[1]]
+r_late <- stacked_rasters[[4]]
+
+
+bloom_early <- terra::ifel(!is.na(r_early), 1, 0)
+bloom_late <- terra::ifel(!is.na(r_late), 1, 0)
+
+
+persistent_bloom <- (bloom_early == 1) & (bloom_late == 1)
+new_bloom <- (bloom_early == 0) & (bloom_late == 1)
+
+
+plot(persistent_bloom, main = "Persistent Blooms", col = c("white", "darkred"))
+plot(new_bloom, main = "New Blooms", col = c("white", "orange"))
+```
+
+
+```{r}
+
+shp_files <- fs::dir_ls("erie_raster_ex/bounds/", regexp = "\\.shp$")
+
+all_aois <- purrr::map_dfr(shp_files, ~{
+  sf::read_sf(.x) %>% 
+    mutate(AOI = tools::file_path_sans_ext(basename(.x))) 
+})
+
+
+all_aois <- sf::st_transform(all_aois, terra::crs(stacked_rasters))
+
+
+highest_date_idx <- which.max(temporal_df$mean_ci)
+peak_raster <- stacked_rasters[[highest_date_idx]]
+
+
+all_aois <- sf::st_transform(shapefiles, crs = 32617) %>% st_make_valid()
+glimpse(all_aois)
+
+aoi_vec<- terra::vect(all_aois)
+
+all_aois <- sf::st_transform(all_aois, crs = 32617) 
+all_aois<-sf::st_make_valid(all_aois)
+aoi_vec  <- terra::vect(all_aois)
+
+extracted_vals <- terra::extract(peak_raster,
+          terra::vect(all_aois), fun = function(x) c(mean = mean(x, na.rm=TRUE), max = max(x, na.rm=TRUE)))
+
+
+summary_table <- bind_cols(all_aois, extracted_vals)
+
+summary_table
+glimpse(summary_table)
+
+clean_summary <- summary_table %>%
+  st_drop_geometry() %>%
+  select(Shape_Area)
+
+print(clean_summary)
+
+
+tm_shape(peak_raster) + 
+  tm_raster(palette = "YlOrRd", title = "Peak CI") + 
+  tm_shape(all_aois) + 
+  tm_borders(col = "black", lwd = 1.5) + 
+  tm_text("AOI", size = 0.2, shadow = TRUE) +
+  tm_layout(main.title = "Peak Bloom Intensity with AOI Boundaries", 
+            legend.outside = TRUE)
+```
+
+
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
