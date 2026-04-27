@@ -133,7 +133,7 @@ table_summary <- rim_data %>%
 ```{r}
 rim_data <- read_csv("RIM_2023_AnnualLoadTable.csv") %>%
    mutate(STAID = str_pad(as.character(STAID), width = 8, pad = "0"))
-
+rim_data
  pcode_labels <- c(
    "P00600" = "Total N", #total nitrogen
    "P00665" = "Total P", #total phosphorous 
@@ -176,7 +176,7 @@ install.packages("scales")
  
  rim_data <- read_csv("RIM_2023_AnnualLoadTable.csv")
  print(rim_data)
- 
+ rim_data
  ts_data <- rim_data %>%
    filter(STAID == "01578310") %>% 
    filter(PCODE %in% c("P00600", "P00665")) %>%
@@ -196,12 +196,56 @@ install.packages("scales")
    theme(legend.position = "none") 
 ```
 
+```{r}
+rim_data <- read_csv("RIM_2023_AnnualLoadTable.csv")
+ print(rim_data)
+ rim_data
+ ts_data <- rim_data %>%
+   filter(STAID == "01646580") %>% 
+   filter(PCODE %in% c("P00600", "P00671")) %>%
+   mutate(Parameter = ifelse(PCODE == "P00671", "Total Nitrogen", "Total Phosphorus"))
+
+ ggplot(ts_data, aes(x = `Water Year`, y = KLoad, color = Parameter)) +
+   geom_line(size = 1) +
+   geom_point() +
+   facet_wrap(~Parameter, scales = "free_y") +
+   theme_minimal() +
+   scale_y_continuous(labels = label_comma()) +
+   labs(
+     title = "Annual Nutrient Loads: Potomac at Chain Bridge (1985-2023)",
+     y = "Annual Nutrient Load (kg/yr)",
+     x = "Year"
+   ) +
+   theme(legend.position = "none") 
+```
+```{r}
+rim_data <- read_csv("RIM_2023_AnnualLoadTable.csv")
+ print(rim_data)
+ rim_data
+ ts_data <- rim_data %>%
+   filter(STAID == "01646580") %>% 
+   filter(PCODE %in% c("P00600", "P00671")) %>%
+   mutate(Parameter = ifelse(PCODE == "P00671", "Total Nitrogen", "Total Phosphorus"))
+
+ ggplot(ts_data, aes(x = `Water Year`, y = KLoad, color = Parameter)) +
+   geom_line(size = 1) +
+   geom_point() +
+   facet_wrap(~Parameter, scales = "free_y") +
+   theme_minimal() +
+   scale_y_continuous(labels = label_comma()) +
+   labs(
+     title = "Annual Nutrient Loads: Potomac at Chain Bridge (1985-2023)",
+     y = "Annual Nutrient Load (kg/yr)",
+     x = "Year"
+   ) +
+   theme(legend.position = "none") 
+```
 
  scatter plot with trend line of flow vs sediment load
 
 ```{r}
  scatter_data <- rim_data %>%
-   filter(PCODE == "P80154", `Water Year` >= 2023)
+   filter(PCODE == "P00600", `Water Year` >= 2023)
  
  ggplot(scatter_data, aes(x = Q, y = KLoad)) +
    geom_point(aes(color = STNAM), alpha = 0.6) +

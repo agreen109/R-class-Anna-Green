@@ -5,6 +5,8 @@ date: "2026-04-26"
 ---
 
 ```{r setup, include=FALSE}
+
+
 raster_files <- fs::dir_ls("erie_raster_ex/images/", regexp = "\\.tif$")
 print(length(raster_files))
 
@@ -53,11 +55,10 @@ if (sf::st_crs(sandusky_bounds) != terra::crs(single_raster)) {
 }
 
 
-august_file <- stringr::str_subset(raster_files, "0816_0822")
-august_raw <- terra::rast(august_file)
 
-august_ci <- august_raw %>% 
-  clean_cicyano() %>% 
+august_file <- stringr::str_subset(raster_files, "0816_0822")
+august_ci <- terra::rast(august_file) %>%
+  clean_cicyano() %>%
   dn_to_ci()
 
 
