@@ -110,7 +110,7 @@ breaks <- seq(min_cost, max_cost, length.out = 6)
 
 color_palette<- colorBin(
   palette="Yl0rRd",
-  domain=counties_bmp$min_cost,
+  domain=counties_bmp$costpercounty,
   bin=breaks
 )
 ```
@@ -134,11 +134,9 @@ map_task1 <- leaflet(counties_bmp) %>%
   addPolygons(
     fillColor = ~color_palette(costpercounty),
     fillOpacity = 0.8,
-    color = "lavender",
+    color = "red",
     weight = 1, 
-    label = ~paste0(NAME10, ": $", formatC(costpercounty, format="f", big.mark=",", digits=2)),
-    highlightOptions = highlightOptions(weight = 3, color = "lavender", bringToFront = TRUE)
-  ) %>%
+    label = ~paste0(NAME10, ": $", formatC(costpercounty, format="f", big.mark=",", digits=2))) %>%
   addLegend(
     position = "bottomright",
     pal = color_palette,
@@ -170,7 +168,6 @@ Go back to your Lab 3 code. Reload the spatial data and rerun the Moran/LISA ana
 
 library(tidycensus)
 library(tidyverse)
-install.packages("spdep")
 library(spdep)
 library(sf)
 library(tmap)
@@ -320,10 +317,10 @@ plot_df <- mp_data %>%
     p_val = local_m[, 5], 
     is_sig = p_val <= 0.05,
     quadrant = case_when(
-      x > 0 & wx > 0 ~ "HH",
-      x < 0 & wx < 0 ~ "LL",
-      x < 0 & wx > 0 ~ "LH",
-      x > 0 & wx < 0 ~ "HL",
+      x > mean(x) & wx > mean(wx) ~ "HH",
+      x < mean(x) & wx < mean(wx) ~ "LL",
+      x < mean(x) & wx > mean(wx) ~ "LH",
+      x > mean(x) & wx < mean(wx) ~ "HL",
       TRUE ~ "None"
     )
   )
@@ -346,7 +343,6 @@ ohio.projected <- ohio.projected %>% #Lab three extra credit question 2
   mutate(
     quadrant = plot_df$quadrant,
     is_sig = plot_df$is_sig,
-    # Mask non-significant observations as "Not Significant"
     lisa_cluster = if_else(is_sig, quadrant, "Not Significant")
   )
 
@@ -366,7 +362,7 @@ tm_shape(ohio.projected) +
     lwd = 0.5
   ) +
   tm_layout(
-    main.title = "LISA Clusters for Female Pop (75-79)",
+    main.title = "LISA Clusters for Female Population (75-79)",
     main.title.size = 1.1,
     legend.position = c("left", "bottom"),
     frame = FALSE
@@ -379,7 +375,7 @@ LISA quadrants are a categorical variable (four classes). Use `colorFactor()` in
 
 ```{r task2_palette, echo=TRUE, message=TRUE}
 pal_lisa <- colorFactor(
-  palette = c("#d7191c", "#fdae61", "#abd9e9", "#2c7bb6"), # Warm for High, Cool for Low
+  palette = c("#d7191c", "#fdae61", "#abd9e9", "#2c7bb6"), 
   levels = c("HH", "HL", "LH", "LL")
 )
 ```
@@ -650,7 +646,7 @@ Document your "one thing" choice in a comment explaining what it is and why it f
 
 ```{r task3_map, echo=TRUE, message=TRUE}
 leaflet() %>%
-  addProviderTiles(providers$CartoDB.DarkMatter) %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
   addPolygons(data = all_aois, group = "Social", color = "blue", weight = 1) %>%
   addRasterImage(x = peak_raster, group = "Environmental", color = "green") %>%
   addLayersControl(
@@ -669,6 +665,8 @@ leaflet() %>%
 ## Questions
 
 1. Reflect on the labs from this semester. What did you learn? What did you like? What did you not like? (Be specific — vague answers will receive partial credit.)
+From the labs this semester, I learned an incredible amount of skills that I did not have before this class. From just learning the basics of coding and working in Rstudio/github, to how to persevere through labs when I absolutely could not figure out a solution, this class has challenged me in a way I have not been challenged in college. I really liked the structure of the last lab few labs, as it is super simple to run tasks in an Rmd, and copied the style for my final project. I did not like the timing of the last few labs, as I feel like I could have done much better on them if they were more spaced out so I had more time to ask questions in class. I also really struggled with the idea of using data/code from different sources. I would find code online/in the book that would perform the task I needed, but it was really hard for me then to make my code cohesive and all work together, which is why I think labs took me such a long time to complete. Overall, this class has been a very good learning experience for me this semester and has given me many skills that I will use in the future. 
+
 
 2. In this lab, all three tasks involved taking existing analysis and presenting it interactively. What does Leaflet add beyond what `tmap` could do? And conversely, what did you give up by switching to Leaflet? Consider both technical and cartographic dimensions.
 
