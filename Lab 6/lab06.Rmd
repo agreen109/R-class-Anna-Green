@@ -108,11 +108,12 @@ glimpse(max_cost)
 breaks <- seq(min_cost, max_cost, length.out = 6)
 
 
-color_palette<- colorBin(
+color_palette<- colorBin( #I dont know why this color palette wont connect with the leaflet mep below 
   palette="Yl0rRd",
   domain=counties_bmp$costpercounty,
   bin=breaks
 )
+
 ```
 
 *Requirement: Do NOT use the default color scheme (Blues). Choose a palette appropriate for sequential data from a source like ColorBrewer.*
@@ -129,10 +130,10 @@ Build the Leaflet map with the following requirements:
 ```{r task1_map, echo=TRUE, message=TRUE}
 glimpse(counties_bmp)
 
-map_task1 <- leaflet(counties_bmp) %>%
+leaflet_map_1 <- leaflet(counties_bmp) %>%
   addProviderTiles(providers$CartoDB.Positron) %>%
   addPolygons(
-    fillColor = ~color_palette(costpercounty),
+    fillColor = ~color_palette(counties_bmp$costpercounty),
     fillOpacity = 0.8,
     color = "red",
     weight = 1, 
@@ -145,10 +146,12 @@ map_task1 <- leaflet(counties_bmp) %>%
     opacity = 0.8
   )
 
-map_task1
+leaflet_map_1
 ```
 
 **Reflection question 1 (answer in your repo):** In `tmap`, classification method choices (jenks, quantile, etc.) are made when you call `tm_polygons()`. In Leaflet, you define the palette and breaks separately using `colorBin()`, `colorQuantile()`, or `colorNumeric()`. What are the trade-offs of this approach? Does separating the palette from the geometry layer give you more or less flexibility? Give a specific example.
+
+To me, the tradeoffs for this approach is that I struggled to get the different pallettes and breaks to work cohesively together and connect within the final map. I think that by doing this approach with separating the palette from the geometry, you have more flexibility as you can define the color pallete without having to add the colors within the polygon, so you are not restricted to the tm_polygons for building your color palette. 
 
 ---
 
@@ -327,14 +330,14 @@ plot_df <- mp_data %>%
 
 ggplot(plot_df, aes(x = x, y = wx, color = quadrant, shape = is_sig)) +
   geom_point(size = 2.5, alpha = 0.8) +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
-  geom_vline(xintercept = 0, linetype = "dashed", color = "gray50") +
+  geom_hline(yintercept = 0, linetype = "solid", color = "gray50") +
+  geom_vline(xintercept = 0, linetype = "solid", color = "gray50") +
   scale_color_manual(values = c("HH" = "red", "LL" = "blue", "HL" = "orange", "LH" = "lightblue")) +
   labs(
-    title = "Local Indicators of Spatial Association (LISA) Moran Plot",
+    title = "LISA Moran Plot",
     x = "Centered Variable",
-    y = "Spatially Lagged Centered Variable",
-    shape = "Significant (p <= 0.05)",
+    y = "Spatially Lagged Variable",
+    shape = "Significant",
     color = "Quadrant"
   ) +
   theme_minimal()
@@ -375,7 +378,7 @@ LISA quadrants are a categorical variable (four classes). Use `colorFactor()` in
 
 ```{r task2_palette, echo=TRUE, message=TRUE}
 pal_lisa <- colorFactor(
-  palette = c("#d7191c", "#fdae61", "#abd9e9", "#2c7bb6"), 
+  palette = c("red", "orange", "lightblue", "blue"), 
   levels = c("HH", "HL", "LH", "LL")
 )
 ```
@@ -393,20 +396,20 @@ Build the Leaflet map with the following requirements:
 counties_lisa
 glimpse(counties_lisa)
 
-map_task2 <- leaflet(counties_lisa) %>%
-  addProviderTiles(providers$CartoDB.Positron, group = "CartoDB.Positron") %>%
-  addProviderTiles(providers$Esri.WorldImagery, group = "Esri.WorldImagery") %>%
-  addProviderTiles(providers$OpenStreetMap, group = "OpenStreetMap") %>%
+leaflet_map_2 <- leaflet(counties_lisa) %>%
+  addProviderTiles(providers$CartoDB.Positron, group = "CartoDB Light") %>%
+  addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>%
+  addProviderTiles(providers$OpenStreetMap, group = "Open Street Map") %>%
   addPolygons(
     fillColor = ~pal_lisa(quadrant),
     fillOpacity = 0.7,
     color = "white",
     weight = 1,
     popup = ~paste0("<strong>County:</strong> ", NAME, 
-                    "<br><strong>Quadrant:</strong> ", quadrant)) %>%
-                    #"<br><strong>p-value:</strong> ", round(p_value, 4))) %>% I dont know how to fix this, will need to ask in class
+                    "<br><strong>Quadrant:</strong> ", quadrant) %>%
+                    #("<br><strong>p-value:</strong> ", round(p_value, 4))) %>%
   addLayersControl(
-    baseGroups = c("CartoDB Light", "Satellite", "OSM Default"),
+    baseGroups = c("CartoDB Light", "Satellite", "Open Street Map"),
     options = layersControlOptions(collapsed = FALSE)
   ) %>%
   addLegend(
@@ -417,12 +420,14 @@ map_task2 <- leaflet(counties_lisa) %>%
     opacity = 0.8
   )
 
-map_task2
+leaflet_map_2
 ```
 
 *Tip: The `addLayersControl()` function accepts `baseGroups` (radio buttons, one active at a time) and `overlayGroups` (checkboxes, multiple can be active). Basemaps should be `baseGroups`.*
 
 **Reflection question 2 (answer in your repo):** Compare the static LISA map you made in Lab 3 to this interactive version. What does interactivity add? Are there things the static map communicates more clearly? Consider map reading purpose (exploration vs. communication) in your answer.
+
+The interactivity within the leaflet map adds a new element with the popup, so viewers of the map can see the specific names of the countys and which quadrent they are in. I think that there are things in static maps that are communicated more clearly, like the static elemnts of the map. For a static map, it is quick and easy for a reader to understand what they are viewing without having to switch between layers and popups. A leaflet map would be better however for a more explorative approach to viewing, when viewers want to get a more in depth analysis for the area of interest. 
 
 ---
 
@@ -623,8 +628,8 @@ tm_shape(peak_raster) +
             legend.outside = TRUE)
 
 # layers I'm using:
-#  - [social layer]: ...
-#  - [environmental layer]: ...
+#  - [social layer]: AOI boundaries
+#  - [environmental layer]: cyanobacteria bloom 
 ```
 
 ### 3.2 — Build the interactive map
@@ -638,39 +643,81 @@ Build the Leaflet map with the following requirements:
   - Hover labels
   - A minimap (`addMiniMap()` from `leaflet.extras`)
   - Marker clustering
-  - A scale bar (`addScaleBar()`)
+  - A scale bar (`addScaleBar()`) #this is the feature I chose
   - Highlighting on hover (`highlight` argument in `addPolygons()`)
 - A legend for at least one layer
 
 Document your "one thing" choice in a comment explaining what it is and why it fits your map.
 
 ```{r task3_map, echo=TRUE, message=TRUE}
-leaflet() %>%
+
+peak_raster_rl <- raster::raster(peak_raster)
+
+pal_env <- colorNumeric(
+  palette = "YlOrRd", 
+  domain = values(peak_raster_rl), 
+  na.color = "transparent"
+)
+
+leaflet_map_task3 <- leaflet() %>%
   addProviderTiles(providers$CartoDB.Positron) %>%
-  addPolygons(data = all_aois, group = "Social", color = "blue", weight = 1) %>%
-  addRasterImage(x = peak_raster, group = "Environmental", color = "green") %>%
+  addRasterImage(
+    x = peak_raster_rl,
+    colors = pal_env,
+    opacity = 0.8,
+    group = "Environmental (Peak Bloom)"
+  ) %>%
+  addPolygons(
+    data = all_aois,
+    group = "Social (AOI Boundaries)",
+    color = "lightblue",
+    weight = 2,
+    fillOpacity = 0.1,
+    highlightOptions = highlightOptions(
+      weight = 4,
+      color = "blue",
+      fillOpacity = 0.3,
+      bringToFront = TRUE
+    ),
+    label = ~paste0("Area of Interest: ", all_aois)
+  ) %>%
+  addLegend(
+    position = "bottomright",
+    pal = pal_env,
+    values = values(peak_raster_rl),
+    title = "Peak Cyanobacteria Intensity",
+    group = "Environmental (Peak Bloom)",
+    opacity = 0.8
+  ) %>%
   addLayersControl(
-    overlayGroups = c("Social", "Environmental"),
+    overlayGroups = c("Environmental (Peak Bloom)", "Social (AOI Boundaries)"),
     options = layersControlOptions(collapsed = FALSE)
   ) %>%
   addScaleBar(position = "bottomleft")
 
-# My "one thing": [describe what you added and why it's applicable]
+leaflet_map_task3
+
+# My "one thing": In my leaflet map, I chose to add a scale bar. I feel that this feature is applicable to my map, as my map shows the intensity of a cyanobacteria bloom within a specific area of interest. By using a scalebar, viewers of my map can potentially use this feature to see how far spread the bloom in within the area of interest. When analyzing algea blooms, it is important to see how wide spread a bloom is, and a scale bar within the map can help the viewer understand the impact a bloom has within the area. 
 ```
 
-**Reflection question 3 (answer in your repo):** Describe the one extra feature you added and justify why it is meaningful for your specific map — not just technically interesting, but cartographically or analytically useful for the story you are trying to tell.
+**Reflection question 3 (answer in your repo):** Describe the one extra feature you added and justify why it is meaningful for your specific map — not just technically interesting, but cartographically or analytically useful for the story you are trying to tell. #answered above
 
 ---
 
 ## Questions
 
 1. Reflect on the labs from this semester. What did you learn? What did you like? What did you not like? (Be specific — vague answers will receive partial credit.)
-From the labs this semester, I learned an incredible amount of skills that I did not have before this class. From just learning the basics of coding and working in Rstudio/github, to how to persevere through labs when I absolutely could not figure out a solution, this class has challenged me in a way I have not been challenged in college. I really liked the structure of the last lab few labs, as it is super simple to run tasks in an Rmd, and copied the style for my final project. I did not like the timing of the last few labs, as I feel like I could have done much better on them if they were more spaced out so I had more time to ask questions in class. I also really struggled with the idea of using data/code from different sources. I would find code online/in the book that would perform the task I needed, but it was really hard for me then to make my code cohesive and all work together, which is why I think labs took me such a long time to complete. Overall, this class has been a very good learning experience for me this semester and has given me many skills that I will use in the future. 
+
+From the labs this semester, I learned an incredible amount of skills that I did not have before this class. From just learning the basics of coding and working in Rstudio/github, to how to persevere through labs when I absolutely could not figure out a solution, this class has challenged me in a way I have not been challenged in college. I really liked the structure of the last lab few labs, as it is super simple to run tasks in an Rmd, and I copied the style for my final project. I did not like the timing of the last few labs however, as I feel like I could have done much better on them if they were more spaced out so I had more time to ask questions in class. I also really struggled with the idea of using data/code from different sources. I would find code online/in the book that would perform the task I needed, but it was really hard for me then to make my code cohesive and all work together, which is why I think labs took me such a long time to complete. Overall, this class has been a very good learning experience for me this semester and has given me many skills that I will use in the future. I also really liked how small the class was this semester, I felt like this class was one of the firsts classes Ive had in a long time where I knew all of my classmates names and they knew me as well as my teacher, I really enjoyed that aspect of this class. 
 
 
 2. In this lab, all three tasks involved taking existing analysis and presenting it interactively. What does Leaflet add beyond what `tmap` could do? And conversely, what did you give up by switching to Leaflet? Consider both technical and cartographic dimensions.
 
+Leaflets adds features that are interactive which is something different then what tmap can do. In leaflet, you can zoom in/zoom out of maps, turn on and off layers, add different map elements that change with the view on the map (ex. scale bar) and look at different tile providers which allows for every viewers experience in viewing the map different. Convversely, by switching to leaflet, you cant control specific placement of chart elements like you can in tmap (at least to my understanding). Tmap also allows for a static map where the viewing is the same no matter the viewer, which is not the same with leaflet.
+
 3. Describe the "one thing" you chose to add to your map in Task 3. What did you implement, why is it applicable to your specific map, and how does it change the user's experience compared to a static version?
+
+The one thing I chose to add to my map in task 3 was adding a scale bar. This scale bar can help the viewers visualize the extent of the cyanobacteria blooms within the map, which is why this feature is applicable to my specific map. This feature changes the user experience because as you zoom in and out of the map, the scale bar adjusts to give the viewer more accurate scales, which is something that does not happen in a static version of this map.  
 
 ---
 
